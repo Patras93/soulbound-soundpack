@@ -1,0 +1,22 @@
+SOULBOUND SOUNDPACK v1.5.7 — CHANGELOG PL
+
+- Skonfigurowano repozytorium Patras93/soulbound-soundpack oraz stały adres origin.
+- Dodano skrypt Windows do pierwszej publikacji wszystkich 66 OGG, kodu i wydania GitHub.
+
+- Przygotowano wydawanie aktualizacji przez GitHub Releases. Dołączony workflow
+  tworzy pełny ZIP, zawierający stały adres HTTPS do kolejnych wydań.
+- Po instalacji ZIP-a pobranego z GitHub Release można użyć w Generic MUD
+  polecenia „Update from source”, bez ręcznego kopiowania pojedynczych OGG.
+- Dodano krótką komendę „sbs updater” i jej opis w „sbs help”.
+- Zachowano identyfikator soundpacku, 66 OGG i dotychczasowe przypisania,
+  wyzwalacze, progi HP oraz zatrzymywanie muzyki z v1.5.6.
+- Potwierdzono obecność wywoływanych funkcji Lua w kodzie Generic MUD v0.23.1.
+- Zweryfikowano składnię Lua, integralność ZIP i odczyt wszystkich 66 OGG.
+
+OGRANICZENIA
+- Automatyczne powiadomienia o aktualizacji i „/update” dla prywatnego
+  repozytorium nie są dostępne w Generic MUD v0.23.1. Działa ręczne
+  „Update from source” z repozytorium publicznym.
+- Test rzeczywistego odtwarzania w aplikacji Generic MUD na Windows
+  wymaga jeszcze wykonania przez użytkownika.
+- Nie zmieniano dotychczasowej logiki nagród questów ani złota.
