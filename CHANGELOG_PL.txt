@@ -1,14 +1,21 @@
-SOULBOUND SOUNDPACK v1.6.1 — POPRAWKA ŁADOWANIA LUA
+SOULBOUND SOUNDPACK v1.6.2 — ZMIANY
 
-- Naprawiono błąd składni "attempt to assign to const variable part"
-  w rozpoznawaniu kwot nagród za questy. Zmienna pętli nie jest
-  już modyfikowana; przetwarzanie złota, srebra i mithrilu bez zmian.
-- Dodano do GitHub Actions kontrolę składni w interpreterze Lupa
-  (takim jak w Generic MUD), oprócz dotychczasowych testów Lua 5.4.
-- Zachowano wszystkie 82 pliki OGG i cały zakres wydania v1.6.0:
-  eventy bossów, kroki miast oraz jaskiń/krypt, awans Duszy.
-- Event podwójnego EXP i jego dotychczasowy dźwięk bez zmian.
-- Zgodność: Soulbound v107.00.0 oraz Generic MUD v0.24.0.
+- Bio Blast Magiteka: biohit.ogg na potwierdzone zadane obrazenia.
+- poisoned.ogg wyłącznie na komunikat skutecznego nałożenia trucizny przez Bio Blast.
+  Nie gra przy nieudanej próbie ani okresowych obrażeniach od trucizny.
+- Atak AoE odtwarza dźwięki maksymalnie raz na krótką serię trafień.
+- Przybycie innego gracza do Świątyni po recallu: dotychczasowy
+  someone recalls.ogg. Poprawiono dawny wyzwalacz, który reagował na zniknięcie.
+  Oczekujemy na znacznik PLAYER_LOGIN, aby nie odtwarzać dźwięku przy logowaniu.
+- multiplierdown.ogg odtwarza się tylko po oficjalnym zakończeniu x2 EXP,
+  raz na koniec eventu. Dźwięk początku double exp.ogg zachowany bez zmian.
+- Zachowano wszystkie istniejące pliki OGG, kroki, awans Duszy, nagrody
+  i dotychczasową kompatybilność Generic MUD v0.24.0, Soulbound v107.00.0.
+- Dodano testy dla Bio Blast, zatrucia, recalla i końca eventu x2 EXP.
+- Wydanie publikowane automatycznie po przejściu testów GitHub Actions.
 
-TESTY: Lua 5.4 (scenariusze funkcjonalne); Lupa (składnia)
-  — muszą przejść w GitHub Actions przed publikacją wydania.
+OGRANICZENIA
+- Dźwięk recalla innych graczy opiera się na odroczonym rozróżnianiu
+  przybycia i logowania (0,7 s). Wymaga testu na żywym serwerze.
+- Efekty Bio Blast dotyczą potwierdzonych komunikatów v107 i nie są
+  odtwarzane od wpisania komendy ani od zmian statystyk.

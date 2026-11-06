@@ -34,7 +34,7 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y -qq lua5.4
           cd .github/tests
-          for test in test_announce.lua test_city.lua test_caves.lua test_soul_level.lua; do
+          for test in test_announce.lua test_city.lua test_caves.lua test_soul_level.lua test_v162.lua; do
             echo "TEST: $test"
             lua5.4 "$test" ../../soundpack.lua
           done

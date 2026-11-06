@@ -1,4 +1,4 @@
-SOULBOUND SOUNDPACK v1.6.1 — INSTRUKCJA (PL)
+SOULBOUND SOUNDPACK v1.6.2 — INSTRUKCJA (PL)
 
 Projekt: https://github.com/Patras93/soulbound-soundpack
 Wydania: https://github.com/Patras93/soulbound-soundpack/releases
@@ -40,7 +40,7 @@ PUBLIKACJA NOWEGO WYDANIA PRZEZ GITHUB
 2. Uruchom PUBLIKUJ_NA_GITHUB.cmd. Musisz miec Git i GitHub CLI,
    a konto GH musi miec uprawnienia do repozytorium Patras93.
 3. Skrypt wgra wszystkie OGG, kod i testy na galaz main.
-4. GitHub Actions wykona testy, utworzy Release v1.6.1 i doda
+4. GitHub Actions wykona testy, utworzy Release v1.6.2 i doda
    Soulbound-Soundpack.zip automatycznie. W serwisie sprawdz Actions.
 5. Nie tworz recznie tagu ani Release; nie wgrywaj pojedynczych OGG
    przez przegladarke.
@@ -49,3 +49,11 @@ UWAGA: automatyczne PUBLIKOWANIE na GitHub po git push nie jest
 równoznaczne z automatycznym POBIERANIEM na komputerach graczy;
 Generic MUD ma opcje Update from source uruchamiana z menu.
 Przy publicznym udostepnianiu nagran nalezy miec prawa do redystrybucji.
+
+DZWIEKI v1.6.2
+- Bio Blast (trafienie): events/biohit.ogg
+- Bio Blast (rzeczywiste nalozenie trucizny): events/poisoned.ogg
+- Inna postac przybywa do Swiatyni po recallu: events/someone recalls.ogg
+- Oficjalny koniec x2 EXP: events/multiplierdown.ogg
+Do sprawdzenia: sbs test biohit, sbs test poisoned,
+sbs test otherrecall, sbs test multiplierdown.

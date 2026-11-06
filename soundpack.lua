@@ -1,4 +1,4 @@
--- SOULBOUND SOUNDPACK v1.6.1 - Native Generic MUD (mud.play)
+-- SOULBOUND SOUNDPACK v1.6.2 - Native Generic MUD (mud.play)
 -- Komunikaty ruchu i strefy: zweryfikowane w Soulbound v107.00.0. SOUND_EVENT pozostaje kompatybilny.
 -- Regula bezpieczenstwa: brak dzwieku jest lepszy niz falszywy dzwiek.
 local active, volume = true, 0.7
@@ -36,6 +36,18 @@ local last_stop_reason='brak'
 local debug_mode=false
 local xp_event_active=nil
 local xp_event_starts=0
+local xp_event_endings=0
+-- Bio Blast: jedno odtworzenie trafienia i zatrucia na serie AoE.
+local bio_window=false
+local bio_hit_played=false
+local bio_poison_played=false
+local bio_generation=0
+-- Serwer nadaje ten sam tekst przy recallu i logowaniu. Znacznik
+-- PLAYER_LOGIN idzie PO ogloszeniu przybycia, dlatego odczekujemy.
+local temple_pending={}
+local temple_recent_login={}
+local temple_epoch=0
+local temple_recall_count=0
 local recall_confirms=0
 -- v12.00.8: zdarzenia przekazywane przez serwer (odzielne od tekstu do NVDA).
 local sound_protocol=false
@@ -85,7 +97,7 @@ local function play(path,channel,delay,force)
  return true
 end
 local fx={
- announce='events/announce.ogg', soullevel='events/soul level.ogg', achievement='events/achievement.ogg', allfull='events/allfull.ogg', cap='events/cap.ogg', area='events/change area.ogg',
+ announce='events/announce.ogg', soullevel='events/soul level.ogg', biohit='events/biohit.ogg', poisoned='events/poisoned.ogg', multiplierdown='events/multiplierdown.ogg', achievement='events/achievement.ogg', allfull='events/allfull.ogg', cap='events/cap.ogg', area='events/change area.ogg',
  wrong='events/command wrong.ogg', crapexp='events/crapexp.ogg', daygift='events/daygift.ogg', doubleexp='events/double exp.ogg',
  ep='events/ep.ogg', exp='events/exp thwack1.ogg', fame='events/fame.ogg', halfcap='events/halfcap.ogg',
  hpfull='events/hpfull.ogg', leavegame='events/leave game.ogg', mana_alarm='events/mana alarm.ogg',
@@ -504,6 +516,58 @@ local function is_money_reward_line(s)
 end
 -- SOUND_EVENT jest protokolem serwera v12.00.8. Komenda status/score/expbank
 -- NIE jest nagroda i nie generuje takiego znacznika. Nie zgadujemy zdarzen.
+-- Rozroznienie wejscia do Swiatyni od wejscia postaci do gry.
+local function temple_reset()
+ temple_epoch=temple_epoch+1
+ temple_pending={}
+ temple_recent_login={}
+end
+local function temple_arrival(name)
+ if not in_world or not active then return end
+ name=norm(name)
+ if name=='' or name==self_name then return end
+ if temple_recent_login[name] and counters.lines-temple_recent_login[name]<15 then return end
+ -- Nie zgadujemy na podstawie tekstu, dopoki znacznik loginu moze nadjsc.
+ if not mud or not mud.timer then return end
+ local epoch=temple_epoch
+ local entry={}
+ temple_pending[name]=entry
+ local ok=pcall(function()
+  mud.timer(0.7,function()
+   if temple_epoch~=epoch or temple_pending[name]~=entry then return end
+   temple_pending[name]=nil
+   if in_world and active then
+    temple_recall_count=temple_recall_count+1
+    sound('otherrecall',0,'sb_otherrecall')
+   end
+  end)
+ end)
+ if not ok then temple_pending[name]=nil end
+end
+
+local function bioblast_reset()
+ bio_generation=bio_generation+1
+ bio_window=false
+ bio_hit_played=false
+ bio_poison_played=false
+end
+local function bioblast_window()
+ if bio_window then return end
+ bio_window=true
+ bio_generation=bio_generation+1
+ local generation=bio_generation
+ if mud and mud.timer then
+  local ok=pcall(function()
+   mud.timer(0.9,function()
+    if generation==bio_generation then bioblast_reset() end
+   end)
+  end)
+  if ok then return end
+ end
+ -- Tryb awaryjny: bez timera nie blokuj nastepnych uzyc Bio Blast.
+ bioblast_reset()
+ bio_window=true
+end
 local function on_sound_event(s)
  local event=s:match('^sound_event%s+([%w_]+)')
  if not event then return false end
@@ -537,6 +601,11 @@ local function on_sound_event(s)
   end
   return true
  elseif event=='player_login' then
+  local name=norm(fields.name or '')
+  if name~='' then
+   temple_recent_login[name]=counters.lines
+   temple_pending[name]=nil
+  end
   sound('enter',0,'sb_other_enter')
   return true
  elseif event=='player_logout' then
@@ -617,6 +686,7 @@ local function on_line(line)
   end
   sound_protocol = s:match('soulbound v12%.00%.8')~=nil or s:match('soulbound v1[3-9]%.')~=nil
   sound_kinds={};mob_hp_by_id={};focused_mob=nil;mob_sound_bucket=nil
+  temple_reset();bioblast_reset()
   city_walk_reset()
    cancel_pending_xp();quest_reward_in_progress=false;quest_money_until=-100000;quest_money_played=false;reset_quest_gold()
   if not in_world then
@@ -632,12 +702,13 @@ local function on_line(line)
   if in_world then sound('leavegame',1) end
   end_combat('wyjscie z gry')
   in_world=false;player_downed=false;self_name=nil;state.player=nil;state.hp=nil;state.mana=nil;state.area=nil
+  temple_reset();bioblast_reset()
   city_walk_reset()
    cancel_pending_xp();quest_reward_in_progress=false;quest_money_until=-100000;reset_quest_gold()
   look_mob=false;mob_name=nil
   return
  end
- if s=='wylogowano z konta.' or s=='do zobaczenia.' then end_combat('rozlaczenie');in_world=false;player_downed=false;self_name=nil;reset_quest_gold();cancel_pending_xp();city_walk_reset();return end
+ if s=='wylogowano z konta.' or s=='do zobaczenia.' then end_combat('rozlaczenie');in_world=false;player_downed=false;self_name=nil;reset_quest_gold();cancel_pending_xp();city_walk_reset();temple_reset();bioblast_reset();return end
  -- Priorytet: kanaly musza zgadzac sie z naglowkiem, nie trescia wiadomosci.
  if s:match('^%[news%] administracja') then sound('news',1);return end
  if s:match('^daily login:%s*dzien %d+%. nagroda ') then sound('daygift',1);return end
@@ -764,12 +835,44 @@ local function on_line(line)
   xp_event_active=true
   return
  end
- if s:match('^event x2 exp zakonczony') or s:match('^event x2 exp:%s*nastepny start') then
+ -- Oficjalny koniec 15-minutowego x2 EXP. Nie jest to zwykly
+ -- eventxp status ani komunikat o kolejnym starcie.
+ if s=='event x2 exp zakonczony. nastepny start na poczatku kolejnej godziny.' then
+  if in_world and xp_event_active~=false then
+   xp_event_endings=xp_event_endings+1
+   sound('multiplierdown',0,'sb_doubleexp_end')
+  end
+  xp_event_active=false
+  return
+ end
+ if s:match('^event x2 exp:%s*nastepny start') then
   xp_event_active=false
   return
  end
  if s:match('^event x2 exp aktywny%.') then
   xp_event_active=true -- to tylko status, bez dzwieku
+  return
+ end
+ -- Bio Blast (Magitek v107): odtworz tylko po REALNYM trafieniu.
+ -- Wiele trafien jednego AoE nie powtarza dzwieku podczas tej samej serii.
+ local bio_damage=tonumber(s:match('^bio blast:%s*.+ otrzymuje (%d+) obrazen%. hp %d+%.'))
+ if bio_damage and bio_damage>0 and in_world then
+  bioblast_window()
+  if not bio_hit_played then
+   bio_hit_played=true
+   sound('biohit',0,'sb_bioblast')
+  end
+  return
+ end
+ -- Potwierdzony nowy efekt z serwera, a nie tick juz istniejacej trucizny.
+ if s=='bio blast: umiejetnosc naklada efekt: trucizna.' then
+  if in_world then
+   bioblast_window()
+   if not bio_poison_played then
+    bio_poison_played=true
+    sound('poisoned',0,'sb_biopoison')
+   end
+  end
   return
  end
  -- Nowe wydarzenia świata i bossowie: tylko potwierdzone ogłoszenia
@@ -800,7 +903,10 @@ local function on_line(line)
     s:match('^.+ uruchamia teleport druzyny%. juz jestes w swiatyni odrodzenia%.$') then
   return -- brak dzwieku, brak potwierdzenia i brak ingerencji w kanaly
  end
- if s:match('^.+ znika w swietle swiatyni%.$') then sound('otherrecall',1);return end
+ -- Znikanie ze starego pokoju to NIE przybycie do Swiatyni.
+ if s:match('^.+ znika w swietle swiatyni%.$') then return end
+ local arriving=s:match('^(.+) pojawia sie w swiatyni odrodzenia%.$')
+ if arriving then temple_arrival(arriving);return end
  -- Zakaz odpalania efektow z list, historii, opisu czy polecen changes.
  if s:match('^nieznana komenda') then sound('wrong',1);return end
  -- Wlasny zgon oraz stan powalenia: oba musza zatrzymywac kondycje mobow.
@@ -944,9 +1050,9 @@ mud.alias('sbs *',function(line,captures)
  else arg=tostring(line or ''):match('^%S+%s+(.+)$') or '' end
  arg=norm(arg)
  if arg=='on' then active=true;say('ON')
- elseif arg=='off' then active=false;end_combat('soundpack off');reset_quest_gold();cancel_pending_xp();say('OFF')
- elseif arg=='status' then say('v1.6.1 '..(active and 'ON' or 'OFF')..'; efekty '..math.floor(volume*100)..'%; muzyka '..(music_enabled and 'ON' or 'OFF')..' '..math.floor(music_mix*100)..'%; kroki_miasto '..(city_steps_enabled and 'ON' or 'OFF')..'; kroki_podziemia '..(cave_steps_enabled and 'ON' or 'OFF')..'; cap '..tostring(cap or 'nieznany')..'; odebrane linie '..counters.lines..'; dzwieki '..counters.played)
- elseif arg=='diag' then say('DIAG v1.6.1: w_swiecie='..tostring(in_world)..'; linie='..counters.lines..'; rozpoznania='..counters.events..'; odtworzenia='..counters.played..'; bledy='..counters.errors..'; mud.play='..(mud and mud.play and 'dostepny' or 'BRAK')..' (typ '..type(mud.play)..')'..'; ostatnie zdarzenie='..last_event..'; ostatnia linia='..last_line..'; ostatni blad='..last_error..'; walki='..tostring(in_combat)..'; powalony='..tostring(player_downed)..'; stop muzyki='..stopped_music..'; zmiany utworu='..music_changes..'; muzyka='..(music_enabled and 'ON' or 'OFF')..' '..math.floor(music_mix*100)..'%; przyczyna='..last_stop_reason..'; slash=przekazywany bezposrednio; recall_odp='..recall_confirms..'; x2_start='..xp_event_starts..'; x2_aktywny='..tostring(xp_event_active)..'; sound_event='..tostring(sound_protocol_count)..'; nowy_protokol='..tostring(sound_protocol)..'; ostatni_marker='..last_sound_marker)
+ elseif arg=='off' then active=false;end_combat('soundpack off');reset_quest_gold();cancel_pending_xp();temple_reset();bioblast_reset();say('OFF')
+ elseif arg=='status' then say('v1.6.2 '..(active and 'ON' or 'OFF')..'; efekty '..math.floor(volume*100)..'%; muzyka '..(music_enabled and 'ON' or 'OFF')..' '..math.floor(music_mix*100)..'%; kroki_miasto '..(city_steps_enabled and 'ON' or 'OFF')..'; kroki_podziemia '..(cave_steps_enabled and 'ON' or 'OFF')..'; cap '..tostring(cap or 'nieznany')..'; odebrane linie '..counters.lines..'; dzwieki '..counters.played)
+ elseif arg=='diag' then say('DIAG v1.6.2: w_swiecie='..tostring(in_world)..'; linie='..counters.lines..'; rozpoznania='..counters.events..'; odtworzenia='..counters.played..'; bledy='..counters.errors..'; mud.play='..(mud and mud.play and 'dostepny' or 'BRAK')..' (typ '..type(mud.play)..')'..'; ostatnie zdarzenie='..last_event..'; ostatnia linia='..last_line..'; ostatni blad='..last_error..'; walki='..tostring(in_combat)..'; powalony='..tostring(player_downed)..'; stop muzyki='..stopped_music..'; zmiany utworu='..music_changes..'; muzyka='..(music_enabled and 'ON' or 'OFF')..' '..math.floor(music_mix*100)..'%; przyczyna='..last_stop_reason..'; slash=przekazywany bezposrednio; recall_odp='..recall_confirms..'; x2_start='..xp_event_starts..'; x2_koniec='..xp_event_endings..'; recall_innych='..temple_recall_count..'; x2_aktywny='..tostring(xp_event_active)..'; sound_event='..tostring(sound_protocol_count)..'; nowy_protokol='..tostring(sound_protocol)..'; ostatni_marker='..last_sound_marker)
  elseif arg=='watch on' then debug_mode=true;say('Podglad linii WLACZONY; sbs watch off wylacza')
  elseif arg=='watch off' then debug_mode=false;say('Podglad linii WYLACZONY')
  elseif arg=='coverage' then say('Soulbound v107.00.0: SOUND_EVENT EXP_BANK/HALF_CAP/FULL_CAP/MOB_HP/PLAYER_LOGIN/PLAYER_LOGOUT/TELL_RECEIVED/REPLY_RECEIVED obslugiwane. Pozostale zdarzenia na podstawie potwierdzonego tekstu. OGG nie dodaja nowych zdarzen po stronie serwera.')
@@ -1005,7 +1111,7 @@ mud.alias('sbs *',function(line,captures)
   elseif fx[kind] then sound(kind,0,'sb_test_'..kind,true)
   else say('Brak przypisania do '..kind) end
  elseif arg=='updater' then say('Aktualizacja: Generic MUD > Soundpacks > Manage installed soundpacks > Update from source. Wymaga pakietu z oficjalnego GitHub Release; po aktualizacji polacz ponownie.')
- elseif arg=='help' then say('sbs on/off/status/updater/diag/coverage/steps on/off/status/test/caves on/off/status/test/music on/off/status/musicvol 0-100/musicstop/testmob POZIOM/testplayer POZIOM/teststop/probe/watch on/off/vol 0-100/test NAZWA')
+ elseif arg=='help' then say('sbs on/off/status/updater/diag/coverage/steps on/off/status/test/caves on/off/status/test/music on/off/status/musicvol 0-100/musicstop/testmob POZIOM/testplayer POZIOM/teststop/probe/watch on/off/vol 0-100/test biohit/poisoned/multiplierdown/otherrecall')
  else say('Wpisz sbs help') end
 end)
 -- Osobny cichy kanal: znaczniki SOUND_EVENT sa techniczne i nie maja
@@ -1017,4 +1123,4 @@ mud.trigger([[^SOUND_EVENT[ ]+]],function(line,captures) on_line(line) end,{rege
 -- Znaczniki SOUND_EVENT sa obslugiwane tylko przez pierwszy wyzwalacz.
 -- W przeciwnym razie player_login / tell_received mogly uruchomic efekt dwa razy.
 mud.trigger([[^(?!SOUND_EVENT[ ]+).+]],function(line,captures) on_line(line) end,{regex=true})
-say('Zaladowano v1.6.1 dla Soulbound v107.00.0 - Generic MUD, Twoje OGG.')
+say('Zaladowano v1.6.2 dla Soulbound v107.00.0 - Generic MUD, Twoje OGG.')

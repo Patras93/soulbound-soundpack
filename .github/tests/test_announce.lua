@@ -98,7 +98,7 @@ n=count('sb_cond_mob')
 send('SOUND_EVENT mob_hp id=rat current=20 max=100')
 check(count('sb_cond_mob')==n,'postmortem mob HP cannot restart loop')
 command('status')
-check(alarms[#alarms]:find('v1.6.1')~=nil,'status version')
+check(alarms[#alarms]:find('v1.6.2')~=nil,'status version')
 command('diag')
 check(alarms[#alarms]:find('bledy=0')~=nil,'diagnostic errors zero')
 
