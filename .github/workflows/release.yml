@@ -28,6 +28,12 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Sprawdz Lua w testach funkcjonalnych
+        shell: bash
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq lua5.4
+          lua5.4 .github/tests/test_soundpack.lua soundpack.lua
       - name: Odczytaj wersje i zweryfikuj tag
         shell: bash
         run: |
@@ -46,8 +52,7 @@ jobs:
           PY
       - name: Zbuduj ZIP i sprawdz OGG
         shell: bash
-        run: |
-          GITHUB_REF_NAME="$RELEASE_TAG" python .github/scripts/build_release.py
+        run: GITHUB_REF_NAME="$RELEASE_TAG" python .github/scripts/build_release.py
       - name: Utworz wydanie i dodaj ZIP automatycznie
         shell: bash
         env:

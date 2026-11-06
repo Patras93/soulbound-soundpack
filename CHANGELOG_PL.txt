@@ -1,26 +1,32 @@
-SOULBOUND SOUNDPACK v1.5.8 — CHANGELOG PL
+SOULBOUND SOUNDPACK v1.5.9 — ZMIANY
 
-- Naprawiono nakladanie dzwiekow po oddaniu zadania: krotki efekt
-  receive gold.ogg odtwarza sie po fanfarze quest complete.ogg,
-  tylko gdy serwer potwierdzil wyplate srebra/zlota/mithrilu.
-- Zmieniono odtwarzanie muzyki kondycji mobow na petle. Utwor gra
-  do nastepnego progu HP albo konca walki; odglosy gracza i zdarzen
-  pozostaja jednokrotne.
-- Usunieto podwojne przetwarzanie technicznych linii SOUND_EVENT
-  przez ogolny i wyspecjalizowany wyzwalacz.
-- Przy wylogowaniu, przelaczeniu postaci i ponownym wejsciu
-  czyszczona jest kolejka oczekujacego dzwieku nagrody.
-- Zachowano wszystkie 66 oryginalnych plikow OGG bez podmiany.
-- Poprawiono GitHub Actions: publikacja nowego GitHub Release
-  i Soulbound-Soundpack.zip nastepuje automatycznie po wypchnieciu
-  zmienionego pack.toml z kolejnym numerem wersji.
+- Muzyka kondycji mobow domyslnie gra na 25% glosnosci efektow
+  (regulacja: sbs musicvol 0-100); pozostale OGG sa bez zmian.
+- Zmiana progu HP podmienia utwor w tym samym kanale BASS bez
+  dodatkowego mud.stop, bez restartu przy niezmienionym progu.
+- Komendy sbs music on/off/status, sbs musicvol, sbs musicstop.
+  Wylaczenie muzyki nie wylacza odglosow gry, nagrod ani NVDA.
+- Podglad dzwiekow: sbs testmob <stan>, sbs testplayer <stan>
+  i sbs teststop. Podglad mobow gra raz, bez petli; nie wchodzi
+  w kanal aktualnej muzyki walki.
+- Naprawiono zatrzymywanie muzyki przy zmianie postaci nawet,
+  gdy serwer wysle nowe powitanie bez starego potwierdzenia wyjscia.
+- Po smierci, wylogowaniu lub wylaczeniu soundpacku kasowane sa
+  zalegle nagrody monetarne; EXP nadal jest wyplacany w grze.
+- Zachowano rozdzielenie quest complete.ogg i receive gold.ogg,
+  poprawki EP, Fame, NEWS, telemetrii i wszystkie 66 OGG.
+- Nowe wydania publikuja sie automatycznie po aktualizacji pack.toml
+  na GitHubie. Dodano testy Lua w workflow przed publikacja.
 
-AUDYT
-- Wszystkie 66 OGG: odczyt audio PASS; bez zupelnie cichych plikow.
-- Składnia Lua i scenariusze oddawania questa, muzyki i SOUND_EVENT:
-  testy automatyczne PASS.
+WERYFIKACJA
+- 45/45 scenariuszy funkcjonalnych Lua — PASS (lokalny interpreter).
+- 66/66 OGG dekodowalnych; pozostaja niezmienione wobec v1.5.8.
+- Test integralnosci i kompletnosci ZIP, zgodnosc pack.toml — PASS.
 
 OGRANICZENIA
-- Nie testowano odtwarzania na zywo w Generic MUD pod Windows.
-- Generic MUD v0.24.0 nie sprawdza automatycznie aktualizacji dowolnego
-  nowego repozytorium. "Update from source" pozostaje reczne.
+- Prawdziwy crossfade nie jest dostepny przez publiczne API
+  natywnego Lua Generic MUD v0.24.0 (brak mud.slide/fade_away).
+  Zmiana utworu jest bez dodatkowego wywolania stop, nie fade.
+- Testow odsluchowych w Generic MUD na Windows jeszcze nie bylo.
+- Generic MUD nie informuje automatycznie o nowych wydaniach
+  dowolnych repozytoriow; Update from source pozostaje reczne.

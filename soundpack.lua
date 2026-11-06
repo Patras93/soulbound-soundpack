@@ -1,7 +1,14 @@
--- SOULBOUND SOUNDPACK v1.5.8 - Native Generic MUD (mud.play)
+-- SOULBOUND SOUNDPACK v1.5.9 - Native Generic MUD (mud.play)
 -- Zrodlo: Soulbound v12.00.8 (SOUND_EVENT + komunikaty tekstowe). Tylko pliki OGG uzytkownika.
 -- Regula bezpieczenstwa: brak dzwieku jest lepszy niz falszywy dzwiek.
 local active, volume = true, 0.7
+-- Kanaly: sb_cond_mob = petla muzyki (ciszej), sb_cond_player = stan HP,
+-- sb_quest / sb_quest_gold = oddzielne nagrody, sb_* = pozostale efekty.
+-- Funkcja mud.play jest dostepna w natywnym Lua, ale mud.slide/fade_away
+-- NIE sa tam udostepnione w Generic MUD 0.24.0: nie udajemy crossfade.
+local music_enabled=true
+local music_mix=0.25 -- 25% glosnosci efektow; osobno konfigurowalne
+local music_changes=0
 local seen, state = {}, {mob=nil,player=nil,area=nil,hp=nil,mana=nil,full=false}
 local cap, last_xp = nil,nil
 local cap_half_seen, cap_full_seen = false,false
@@ -54,7 +61,11 @@ local function play(path,channel,delay,force)
  if not mud or not mud.play then
   counters.errors=counters.errors+1; last_error='Brak mud.play';say(last_error);return false
  end
- local ok,res=pcall(function() return mud.play('sounds/'..path,channel,volume,0,channel=='sb_cond_mob') end)
+ local music=channel=='sb_cond_mob'
+ local preview_music=channel=='sb_preview_mob'
+ if music and (not music_enabled or music_mix<=0) then return false end
+ local gain=volume*((music or preview_music) and music_mix or 1)
+ local ok,res=pcall(function() return mud.play('sounds/'..path,channel,gain,0,music) end)
  if not ok or res==false then
   counters.errors=counters.errors+1
   last_error=not ok and tostring(res) or ('Plik nieodnaleziony lub odrzucony: sounds/'..path)
@@ -93,6 +104,24 @@ local function stop_mob_music(reason)
  end
  stopped_music=stopped_music+1
  last_stop_reason=reason or 'nieznany'
+ return true
+end
+-- BASS podmienia dzwiek we wskazanym kanale. Przy zmianie progu HP
+-- NIE wykonujemy mud.stop przed mud.play, unikajac podwojnej przerwy.
+-- To natychmiastowa zmiana utworu, nie crossfade.
+local function start_mob_music(label)
+ if not music_enabled or music_mix<=0 or not active or not in_world or player_downed then
+  mob_sound_bucket=nil
+  return false
+ end
+ if mob_sound_bucket==label then return true end
+ if not play('mob/'..label..'.ogg','sb_cond_mob',0) then
+  stop_mob_music('blad muzyki / plik nieobecny')
+  mob_sound_bucket=nil
+  return false
+ end
+ mob_sound_bucket=label
+ music_changes=music_changes+1
  return true
 end
 local function end_combat(reason)
@@ -137,8 +166,11 @@ local function health(current,maximum,who)
  if state[who]==label then return end
  state[who]=label
  if label=='died' then return end -- smierc obsluguje komunikat pokonania
- if who=='mob' then stop_mob_music('zmiana kondycji');mob_sound_bucket=label end
- play(who..'/'..label..'.ogg','sb_cond_'..who,0)
+ if who=='mob' then
+  start_mob_music(label)
+ else
+  play(who..'/'..label..'.ogg','sb_cond_player',0)
+ end
 end
 local function condition(txt,who)
  for _,label in ipairs(levels) do
@@ -147,8 +179,11 @@ local function condition(txt,who)
    if who=='player' and label=='dying' then label='awful' end
    if state[who]~=label then
     state[who]=label
-    if who=='mob' then stop_mob_music('zmiana kondycji');mob_sound_bucket=label end
-    play(who..'/'..label..'.ogg','sb_cond_'..who,0)
+    if who=='mob' then
+     start_mob_music(label)
+    else
+     play(who..'/'..label..'.ogg','sb_cond_player',0)
+    end
    end
    return
   end
@@ -225,9 +260,11 @@ end
 local potion_vitals_until=-100000
 local potion_hp_gain=0
 
+local reset_quest_gold -- forward, aby anulowac opozniona nagrode takze po smierci
 local function death()
  if player_downed then end_combat('ponowne potwierdzenie zgonu'); return end
  player_downed=true
+ if reset_quest_gold then reset_quest_gold() end
  pending_full_hp=false;pending_full_mana=false
  end_combat('smierc postaci')
  sound('mort',2,'sb_death_a');sound('youdied',2,'sb_death_b')
@@ -280,7 +317,7 @@ end
 -- Odczekaj do konca fanfary questa (2,6 s), aby krotkie zloto (0,54 s)
 -- nie zostalo zagluszone. Timer liczymy od potwierdzenia oddania zadania,
 -- a nie od momentu otrzymania komunikatu o monetach.
-local function reset_quest_gold()
+reset_quest_gold=function()
  quest_gold_generation=quest_gold_generation+1
  quest_gold_pending=false
  quest_gold_ready=false
@@ -396,12 +433,7 @@ local function on_sound_event(s)
    local new_focus=(focused_mob==nil)
    if new_focus then focused_mob=id end
    if focused_mob==id and (label~=old or new_focus) then
-    if label~=mob_sound_bucket then
-     stop_mob_music('zmiana kondycji sledzonego moba')
-     if play('mob/'..label..'.ogg','sb_cond_mob',0) then
-      mob_sound_bucket=label
-     end
-    end
+    if label~=mob_sound_bucket then start_mob_music(label) end
     state.mob=label
    end
   end
@@ -433,7 +465,12 @@ local function on_line(line)
  -- Zapisuje postac i wracam do wyboru postaci. -> wyjscie postaci
  -- Nie traktuj menu ani dowolnego powitania NPC jako logowania.
  if s:match('^witaj,%s*.+%. soulbound v[%d%.]+ world core%.$') then
+  local previous_character=self_name
   self_name=s:match('^witaj,%s*(.-)%. soulbound v[%d%.]+ world core%.$')
+  if in_world and previous_character and previous_character~=self_name then
+   end_combat('zmiana postaci')
+   in_world=false
+  end
   sound_protocol = s:match('soulbound v12%.00%.8')~=nil or s:match('soulbound v1[3-9]%.')~=nil
   sound_kinds={};mob_hp_by_id={};focused_mob=nil;mob_sound_bucket=nil
    cancel_pending_xp();quest_reward_in_progress=false;quest_money_until=-100000;quest_money_played=false;reset_quest_gold()
@@ -454,7 +491,7 @@ local function on_line(line)
   look_mob=false;mob_name=nil
   return
  end
- if s=='wylogowano z konta.' or s=='do zobaczenia.' then end_combat('rozlaczenie');in_world=false;player_downed=false;self_name=nil;reset_quest_gold();return end
+ if s=='wylogowano z konta.' or s=='do zobaczenia.' then end_combat('rozlaczenie');in_world=false;player_downed=false;self_name=nil;reset_quest_gold();cancel_pending_xp();return end
  -- Priorytet: kanaly musza zgadzac sie z naglowkiem, nie trescia wiadomosci.
  if s:match('^%[news%] administracja') then sound('news',1);return end
  if s:match('^daily login:%s*dzien %d+%. nagroda ') then sound('daygift',1);return end
@@ -745,13 +782,47 @@ mud.alias('sbs *',function(line,captures)
  else arg=tostring(line or ''):match('^%S+%s+(.+)$') or '' end
  arg=norm(arg)
  if arg=='on' then active=true;say('ON')
- elseif arg=='off' then active=false;end_combat('soundpack off');say('OFF')
- elseif arg=='status' then say('v1.5.8 '..(active and 'ON' or 'OFF')..'; glosnosc '..math.floor(volume*100)..'%; cap '..tostring(cap or 'nieznany')..'; odebrane linie '..counters.lines..'; dzwieki '..counters.played)
- elseif arg=='diag' then say('DIAG v1.5.8: w_swiecie='..tostring(in_world)..'; linie='..counters.lines..'; rozpoznania='..counters.events..'; odtworzenia='..counters.played..'; bledy='..counters.errors..'; mud.play='..(mud and mud.play and 'dostepny' or 'BRAK')..' (typ '..type(mud.play)..')'..'; ostatnie zdarzenie='..last_event..'; ostatnia linia='..last_line..'; ostatni blad='..last_error..'; walki='..tostring(in_combat)..'; powalony='..tostring(player_downed)..'; stop muzyki='..stopped_music..'; przyczyna='..last_stop_reason..'; slash=przekazywany bezposrednio; recall_odp='..recall_confirms..'; x2_start='..xp_event_starts..'; x2_aktywny='..tostring(xp_event_active)..'; sound_event='..tostring(sound_protocol_count)..'; nowy_protokol='..tostring(sound_protocol)..'; ostatni_marker='..last_sound_marker)
+ elseif arg=='off' then active=false;end_combat('soundpack off');reset_quest_gold();cancel_pending_xp();say('OFF')
+ elseif arg=='status' then say('v1.5.9 '..(active and 'ON' or 'OFF')..'; efekty '..math.floor(volume*100)..'%; muzyka '..(music_enabled and 'ON' or 'OFF')..' '..math.floor(music_mix*100)..'%; cap '..tostring(cap or 'nieznany')..'; odebrane linie '..counters.lines..'; dzwieki '..counters.played)
+ elseif arg=='diag' then say('DIAG v1.5.9: w_swiecie='..tostring(in_world)..'; linie='..counters.lines..'; rozpoznania='..counters.events..'; odtworzenia='..counters.played..'; bledy='..counters.errors..'; mud.play='..(mud and mud.play and 'dostepny' or 'BRAK')..' (typ '..type(mud.play)..')'..'; ostatnie zdarzenie='..last_event..'; ostatnia linia='..last_line..'; ostatni blad='..last_error..'; walki='..tostring(in_combat)..'; powalony='..tostring(player_downed)..'; stop muzyki='..stopped_music..'; zmiany utworu='..music_changes..'; muzyka='..(music_enabled and 'ON' or 'OFF')..' '..math.floor(music_mix*100)..'%; przyczyna='..last_stop_reason..'; slash=przekazywany bezposrednio; recall_odp='..recall_confirms..'; x2_start='..xp_event_starts..'; x2_aktywny='..tostring(xp_event_active)..'; sound_event='..tostring(sound_protocol_count)..'; nowy_protokol='..tostring(sound_protocol)..'; ostatni_marker='..last_sound_marker)
  elseif arg=='watch on' then debug_mode=true;say('Podglad linii WLACZONY; sbs watch off wylacza')
  elseif arg=='watch off' then debug_mode=false;say('Podglad linii WYLACZONY')
  elseif arg=='coverage' then say('Soulbound 12.00.8: SOUND_EVENT EXP_BANK/HALF_CAP/FULL_CAP/MOB_HP/PLAYER_LOGIN/PLAYER_LOGOUT/TELL_RECEIVED/REPLY_RECEIVED obslugiwane. Pozostale zdarzenia na podstawie potwierdzonego tekstu. OGG nie dodaja nowych zdarzen po stronie serwera.')
  elseif arg=='musicstop' then end_combat('reczne zatrzymanie');say('Zatrzymano muzyke kondycji mobow')
+ elseif arg=='music off' then music_enabled=false;stop_mob_music('muzyka OFF');mob_sound_bucket=nil;say('Muzyka walki OFF; efekty gry zostaja')
+ elseif arg=='music on' then
+  music_enabled=true
+  if state.mob and in_world and not player_downed and (in_combat or focused_mob) then start_mob_music(state.mob) end
+  say('Muzyka walki ON')
+ elseif arg=='music status' then say('Muzyka walki '..(music_enabled and 'ON' or 'OFF')..', glosnosc '..math.floor(music_mix*100)..'%; efekty '..math.floor(volume*100)..'%')
+ elseif arg:match('^musicvol %d+$') then
+  local n=tonumber(arg:match('%d+'))
+  if n<=100 then
+   music_mix=n/100
+   -- Zmiana glosnosci dotyczy tez aktualnego utworu (wznowienie od poczatku).
+   stop_mob_music('zmiana glosnosci muzyki')
+   mob_sound_bucket=nil
+   if n>0 and state.mob and in_world and music_enabled and not player_downed and (in_combat or focused_mob) then
+    start_mob_music(state.mob)
+   end
+   say('Glosnosc muzyki '..n..'%; efekty bez zmian')
+  end
+
+ elseif arg=='teststop' then
+  if mud and mud.stop then pcall(function() mud.stop('sb_preview_mob');mud.stop('sb_preview_player') end) end
+  say('Podglad nagran zatrzymany')
+ elseif arg:match('^testmob .+') or arg:match('^testplayer .+') then
+  local who,label=arg:match('^(testmob)%s+(.+)$')
+  if not who then who,label=arg:match('^(testplayer)%s+(.+)$') end
+  local valid=false
+  for _,name in ipairs(levels) do if name==label then valid=true end end
+  if who=='testmob' and label=='died' then valid=true end
+  if who=='testplayer' and label=='dying' then valid=false end
+  if valid then
+   local file=(who=='testmob' and 'mob/' or 'player/')..label..'.ogg'
+   local channel=who=='testmob' and 'sb_preview_mob' or 'sb_preview_player'
+   if play(file,channel,0,true) then say('Test '..label..'; sbs teststop zatrzymuje podglad') end
+  else say('Nieznany dzwiek kondycji: '..label) end
  elseif arg=='probe' then on_line('Wazne odkrycie: +10 EP.');say('Symulacja lokalna EP: zdarzenia='..counters.events..', dzwieki='..counters.played..'. Nie jest to test serwera.')
  elseif arg:match('^vol %d+$') then local n=tonumber(arg:match('%d+'));if n<=100 then volume=n/100;say('Glosnosc '..n..'%') end
  elseif arg:match('^test [%w_]+$') then
@@ -760,7 +831,7 @@ mud.alias('sbs *',function(line,captures)
   elseif fx[kind] then sound(kind,0,'sb_test_'..kind,true)
   else say('Brak przypisania do '..kind) end
  elseif arg=='updater' then say('Aktualizacja: Generic MUD > Soundpacks > Manage installed soundpacks > Update from source. Wymaga pakietu z oficjalnego GitHub Release; po aktualizacji polacz ponownie.')
- elseif arg=='help' then say('sbs on/off/status/updater/diag/coverage/musicstop/probe/watch on/off/vol 0-100/test recall/test doubleexp/test ep/test fame/test cap/test death')
+ elseif arg=='help' then say('sbs on/off/status/updater/diag/coverage/music on/off/status/musicvol 0-100/musicstop/testmob POZIOM/testplayer POZIOM/teststop/probe/watch on/off/vol 0-100/test NAZWA')
  else say('Wpisz sbs help') end
 end)
 -- Osobny cichy kanal: znaczniki SOUND_EVENT sa techniczne i nie maja
@@ -772,4 +843,4 @@ mud.trigger([[^SOUND_EVENT[ ]+]],function(line,captures) on_line(line) end,{rege
 -- Znaczniki SOUND_EVENT sa obslugiwane tylko przez pierwszy wyzwalacz.
 -- W przeciwnym razie player_login / tell_received mogly uruchomic efekt dwa razy.
 mud.trigger([[^(?!SOUND_EVENT[ ]+).+]],function(line,captures) on_line(line) end,{regex=true})
-say('Zaladowano v1.5.8 dla Soulbound v12.00.8 - native Generic MUD, tylko Twoje OGG.')
+say('Zaladowano v1.5.9 dla Soulbound v12.00.8 - native Generic MUD, tylko Twoje OGG.')
