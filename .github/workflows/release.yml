@@ -1,28 +1,71 @@
-name: Soulbound Soundpack release
+name: Soulbound Soundpack - automatyczne wydania
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'pack.toml'
   release:
     types: [published]
+  workflow_dispatch:
 
 permissions:
   contents: write
 
+concurrency:
+  group: soulbound-release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
-  package:
+  build-and-release:
     runs-on: ubuntu-latest
     steps:
-      - name: Pobierz pliki soundpacku
+      - name: Pobierz soundpack
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.release.tag_name }}
+          ref: ${{ github.event_name == 'release' && github.event.release.tag_name || github.ref_name }}
       - name: Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Przygotuj ZIP ze zrodlem aktualizacji
-        run: python .github/scripts/build_release.py
-      - name: Dodaj ZIP do wydania
+      - name: Odczytaj wersje i zweryfikuj tag
+        shell: bash
+        run: |
+          python - <<'PY'
+          import os, re, tomllib
+          from pathlib import Path
+          data = tomllib.loads(Path('pack.toml').read_text(encoding='utf-8'))
+          tag = 'v' + str(data['version'])
+          if not re.fullmatch(r'v\d+\.\d+\.\d+(?:\.\d+)?', tag):
+              raise SystemExit('Niepoprawna wersja pack.toml')
+          if os.environ.get('GITHUB_EVENT_NAME') == 'release' and os.environ.get('GITHUB_REF_NAME') != tag:
+              raise SystemExit('Tag wydania nie zgadza sie z pack.toml')
+          with open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8') as f:
+              f.write('RELEASE_TAG=' + tag + '\n')
+          print('Wersja:', tag)
+          PY
+      - name: Zbuduj ZIP i sprawdz OGG
+        shell: bash
+        run: |
+          GITHUB_REF_NAME="$RELEASE_TAG" python .github/scripts/build_release.py
+      - name: Utworz wydanie i dodaj ZIP automatycznie
+        shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RELEASE_TAG: ${{ github.event.release.tag_name }}
-        run: gh release upload "$RELEASE_TAG" dist/Soulbound-Soundpack.zip --clobber
+        run: |
+          if gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            if [ "$GITHUB_EVENT_NAME" = "release" ]; then
+              gh release upload "$RELEASE_TAG" dist/Soulbound-Soundpack.zip --clobber --repo "$GITHUB_REPOSITORY"
+              echo "Dodano ZIP do wydania $RELEASE_TAG"
+            else
+              echo "Wydanie $RELEASE_TAG juz istnieje - nie nadpisuje opublikowanej wersji."
+            fi
+          else
+            gh release create "$RELEASE_TAG" dist/Soulbound-Soundpack.zip \
+              --repo "$GITHUB_REPOSITORY" \
+              --target "$GITHUB_SHA" \
+              --title "Soulbound Soundpack $RELEASE_TAG" \
+              --notes-file CHANGELOG_PL.txt \
+              --latest
+            echo "Automatycznie opublikowano $RELEASE_TAG"
+          fi

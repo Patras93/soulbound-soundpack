@@ -1,4 +1,4 @@
--- SOULBOUND SOUNDPACK v1.5.7 - Native Generic MUD (mud.play)
+-- SOULBOUND SOUNDPACK v1.5.8 - Native Generic MUD (mud.play)
 -- Zrodlo: Soulbound v12.00.8 (SOUND_EVENT + komunikaty tekstowe). Tylko pliki OGG uzytkownika.
 -- Regula bezpieczenstwa: brak dzwieku jest lepszy niz falszywy dzwiek.
 local active, volume = true, 0.7
@@ -54,7 +54,7 @@ local function play(path,channel,delay,force)
  if not mud or not mud.play then
   counters.errors=counters.errors+1; last_error='Brak mud.play';say(last_error);return false
  end
- local ok,res=pcall(function() return mud.play('sounds/'..path,channel,volume,0,false) end)
+ local ok,res=pcall(function() return mud.play('sounds/'..path,channel,volume,0,channel=='sb_cond_mob') end)
  if not ok or res==false then
   counters.errors=counters.errors+1
   last_error=not ok and tostring(res) or ('Plik nieodnaleziony lub odrzucony: sounds/'..path)
@@ -234,7 +234,7 @@ local function death()
  state.player=nil
  if mud and mud.stop then pcall(function() mud.stop('sb_cond_player') end) end
 end
--- v1.5.7: Nagrody questow maja OSOBNE dzwieki: ukonczenie + pieniadze.
+-- v1.5.8: Nagrody questow maja OSOBNE dzwieki: ukonczenie + pieniadze.
 -- Serwer 12.00.8 najpierw wypisuje EXP postaci, a dopiero pozniej
 -- "Zadanie ukonczone". Wstrzymujemy dzwiek EXP na krotka chwile;
 -- jesli przyszlo potwierdzenie questa, nie odtwarzamy nagrody EXP.
@@ -243,6 +243,9 @@ local quest_reward_in_progress=false
 local quest_reward_marker_line=-100000
 local quest_money_until=-100000
 local quest_money_played=false
+local quest_gold_generation=0
+local quest_gold_pending=false
+local quest_gold_ready=false
 local pending_xp_sounds={}
 local pending_xp_seq=0
 local function cancel_pending_xp()
@@ -274,8 +277,50 @@ local function queue_xp_sound(key,channel)
   say(last_error)
  end
 end
+-- Odczekaj do konca fanfary questa (2,6 s), aby krotkie zloto (0,54 s)
+-- nie zostalo zagluszone. Timer liczymy od potwierdzenia oddania zadania,
+-- a nie od momentu otrzymania komunikatu o monetach.
+local function reset_quest_gold()
+ quest_gold_generation=quest_gold_generation+1
+ quest_gold_pending=false
+ quest_gold_ready=false
+end
+local function play_quest_gold()
+ if not quest_gold_pending then return end
+ quest_gold_pending=false
+ sound('gold',0,'sb_quest_gold')
+end
+local function prepare_quest_gold()
+ reset_quest_gold()
+ local token=quest_gold_generation
+ if mud and mud.timer then
+  local ok=pcall(function()
+   mud.timer(2.75,function()
+    if token~=quest_gold_generation then return end
+    quest_gold_ready=true
+    if in_world then play_quest_gold() end
+   end)
+  end)
+  if ok then return end
+ end
+ -- Zgodnosc wsteczna: brak timera nie moze wyciszyc nagrody.
+ quest_gold_ready=true
+end
 local function is_money_reward_line(s)
- return s:match('%d+%s+srebra') or s:match('%d+%s+zlota') or s:match('%d+%s+mithril')
+ -- Weryfikuj sama kwote po nazwie NPC, nie nazwe przedmiotu z liczba.
+ local amount=s:match('^.+ wrecza ci nagrode:%s*(.-)%.$')
+ if not amount then
+  amount=s:match('^o kurde%s*%-%s*premia za wykonanie:%s*dodatkowo%s+(.-)%.$')
+ end
+ if not amount then return false end
+ local count=0
+ for part in (amount..','):gmatch('(.-),') do
+  part=part:gsub('^%s+',''):gsub('%s+$','')
+  local n,unit=part:match('^(%d+)%s+([a-z]+)$')
+  if not n or (unit~='srebra' and unit~='zlota' and unit~='mithril') then return false end
+  if tonumber(n)>0 then count=count+1 end
+ end
+ return count>0
 end
 -- SOUND_EVENT jest protokolem serwera v12.00.8. Komenda status/score/expbank
 -- NIE jest nagroda i nie generuje takiego znacznika. Nie zgadujemy zdarzen.
@@ -391,7 +436,7 @@ local function on_line(line)
   self_name=s:match('^witaj,%s*(.-)%. soulbound v[%d%.]+ world core%.$')
   sound_protocol = s:match('soulbound v12%.00%.8')~=nil or s:match('soulbound v1[3-9]%.')~=nil
   sound_kinds={};mob_hp_by_id={};focused_mob=nil;mob_sound_bucket=nil
-   cancel_pending_xp();quest_reward_in_progress=false;quest_money_until=-100000;quest_money_played=false
+   cancel_pending_xp();quest_reward_in_progress=false;quest_money_until=-100000;quest_money_played=false;reset_quest_gold()
   if not in_world then
    end_combat('wejscie do gry')
    in_world=true;player_downed=false;xp_event_active=nil;state.player=nil;state.hp=nil;state.mana=nil;state.full=false
@@ -405,11 +450,11 @@ local function on_line(line)
   if in_world then sound('leavegame',1) end
   end_combat('wyjscie z gry')
   in_world=false;player_downed=false;self_name=nil;state.player=nil;state.hp=nil;state.mana=nil;state.area=nil
-   cancel_pending_xp();quest_reward_in_progress=false;quest_money_until=-100000
+   cancel_pending_xp();quest_reward_in_progress=false;quest_money_until=-100000;reset_quest_gold()
   look_mob=false;mob_name=nil
   return
  end
- if s=='wylogowano z konta.' or s=='do zobaczenia.' then end_combat('rozlaczenie');in_world=false;player_downed=false;self_name=nil;return end
+ if s=='wylogowano z konta.' or s=='do zobaczenia.' then end_combat('rozlaczenie');in_world=false;player_downed=false;self_name=nil;reset_quest_gold();return end
  -- Priorytet: kanaly musza zgadzac sie z naglowkiem, nie trescia wiadomosci.
  if s:match('^%[news%] administracja') then sound('news',1);return end
  if s:match('^daily login:%s*dzien %d+%. nagroda ') then sound('daygift',1);return end
@@ -604,6 +649,7 @@ local function on_line(line)
    quest_reward_in_progress=false
    quest_money_until=counters.lines+35
    quest_money_played=false
+   prepare_quest_gold()
    sound('quest',1)
    return
   end
@@ -624,7 +670,8 @@ local function on_line(line)
      (s:match('^.+ wrecza ci nagrode: ') or s:match('^o kurde%s*%-%s*premia za wykonanie:')) then
    quest_money_played=true
    quest_money_until=-100000
-   sound('gold',0,'sb_quest_gold')
+   quest_gold_pending=true
+   if quest_gold_ready then play_quest_gold() end
    return
   end
 if s:match('^fame zaliczone') then sound('fame',1);return end
@@ -699,8 +746,8 @@ mud.alias('sbs *',function(line,captures)
  arg=norm(arg)
  if arg=='on' then active=true;say('ON')
  elseif arg=='off' then active=false;end_combat('soundpack off');say('OFF')
- elseif arg=='status' then say('v1.5.7 '..(active and 'ON' or 'OFF')..'; glosnosc '..math.floor(volume*100)..'%; cap '..tostring(cap or 'nieznany')..'; odebrane linie '..counters.lines..'; dzwieki '..counters.played)
- elseif arg=='diag' then say('DIAG v1.5.7: w_swiecie='..tostring(in_world)..'; linie='..counters.lines..'; rozpoznania='..counters.events..'; odtworzenia='..counters.played..'; bledy='..counters.errors..'; mud.play='..(mud and mud.play and 'dostepny' or 'BRAK')..' (typ '..type(mud.play)..')'..'; ostatnie zdarzenie='..last_event..'; ostatnia linia='..last_line..'; ostatni blad='..last_error..'; walki='..tostring(in_combat)..'; powalony='..tostring(player_downed)..'; stop muzyki='..stopped_music..'; przyczyna='..last_stop_reason..'; slash=przekazywany bezposrednio; recall_odp='..recall_confirms..'; x2_start='..xp_event_starts..'; x2_aktywny='..tostring(xp_event_active)..'; sound_event='..tostring(sound_protocol_count)..'; nowy_protokol='..tostring(sound_protocol)..'; ostatni_marker='..last_sound_marker)
+ elseif arg=='status' then say('v1.5.8 '..(active and 'ON' or 'OFF')..'; glosnosc '..math.floor(volume*100)..'%; cap '..tostring(cap or 'nieznany')..'; odebrane linie '..counters.lines..'; dzwieki '..counters.played)
+ elseif arg=='diag' then say('DIAG v1.5.8: w_swiecie='..tostring(in_world)..'; linie='..counters.lines..'; rozpoznania='..counters.events..'; odtworzenia='..counters.played..'; bledy='..counters.errors..'; mud.play='..(mud and mud.play and 'dostepny' or 'BRAK')..' (typ '..type(mud.play)..')'..'; ostatnie zdarzenie='..last_event..'; ostatnia linia='..last_line..'; ostatni blad='..last_error..'; walki='..tostring(in_combat)..'; powalony='..tostring(player_downed)..'; stop muzyki='..stopped_music..'; przyczyna='..last_stop_reason..'; slash=przekazywany bezposrednio; recall_odp='..recall_confirms..'; x2_start='..xp_event_starts..'; x2_aktywny='..tostring(xp_event_active)..'; sound_event='..tostring(sound_protocol_count)..'; nowy_protokol='..tostring(sound_protocol)..'; ostatni_marker='..last_sound_marker)
  elseif arg=='watch on' then debug_mode=true;say('Podglad linii WLACZONY; sbs watch off wylacza')
  elseif arg=='watch off' then debug_mode=false;say('Podglad linii WYLACZONY')
  elseif arg=='coverage' then say('Soulbound 12.00.8: SOUND_EVENT EXP_BANK/HALF_CAP/FULL_CAP/MOB_HP/PLAYER_LOGIN/PLAYER_LOGOUT/TELL_RECEIVED/REPLY_RECEIVED obslugiwane. Pozostale zdarzenia na podstawie potwierdzonego tekstu. OGG nie dodaja nowych zdarzen po stronie serwera.')
@@ -717,10 +764,12 @@ mud.alias('sbs *',function(line,captures)
  else say('Wpisz sbs help') end
 end)
 -- Osobny cichy kanal: znaczniki SOUND_EVENT sa techniczne i nie maja
--- przeszkadzac NVDA. Dotyczy natywnego Generic MUD, takze 0.23.1.
+-- przeszkadzac NVDA. Dotyczy natywnego Generic MUD 0.24.0.
 if mud.set_channel then
  pcall(function() mud.set_channel('sb_telemetry', {speak=false,display=false,interrupt=false}) end)
 end
 mud.trigger([[^SOUND_EVENT[ ]+]],function(line,captures) on_line(line) end,{regex=true,priority=100,channel='sb_telemetry'})
-mud.trigger([[.+]],function(line,captures) on_line(line) end,{regex=true})
-say('Zaladowano v1.5.7 dla Soulbound v12.00.8 - native Generic MUD, tylko Twoje OGG.')
+-- Znaczniki SOUND_EVENT sa obslugiwane tylko przez pierwszy wyzwalacz.
+-- W przeciwnym razie player_login / tell_received mogly uruchomic efekt dwa razy.
+mud.trigger([[^(?!SOUND_EVENT[ ]+).+]],function(line,captures) on_line(line) end,{regex=true})
+say('Zaladowano v1.5.8 dla Soulbound v12.00.8 - native Generic MUD, tylko Twoje OGG.')

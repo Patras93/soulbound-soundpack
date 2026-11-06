@@ -1,10 +1,10 @@
-# Soulbound Soundpack v1.5.7 - publikacja w repozytorium i wydanie GitHub Releases
+# Soulbound Soundpack v1.5.8 - publikacja w repozytorium i wydanie GitHub Releases
 # Uruchom na Windows po rozpakowaniu calego ZIP-a.
 & {
     $ErrorActionPreference = 'Stop'
     $repo = 'Patras93/soulbound-soundpack'
     $root = Split-Path -Parent $PSCommandPath
-    $tag = 'v1.5.7'
+    $tag = 'v1.5.8'
     $dest = Join-Path ([IO.Path]::GetTempPath()) ('SoulboundGithub-' + [guid]::NewGuid().ToString('N'))
     $repoUrl = 'https://github.com/Patras93/soulbound-soundpack.git'
     try {
@@ -56,7 +56,7 @@
         if ($LASTEXITCODE -ne 0) { throw 'Nie udalo sie dodac plikow do Git.' }
         & git -C $dest diff --cached --quiet
         if ($LASTEXITCODE -eq 1) {
-            & git -C $dest commit --quiet -m 'Soulbound Soundpack v1.5.7 - GitHub updater i 66 OGG'
+            & git -C $dest commit --quiet -m 'Soulbound Soundpack v1.5.8 - GitHub updater i 66 OGG'
             if ($LASTEXITCODE -ne 0) { throw 'Blad git commit.' }
             & git -C $dest push --quiet origin HEAD:main
             if ($LASTEXITCODE -ne 0) { throw 'Blad git push. Pliki na GitHubie moga nie byc zaktualizowane.' }
@@ -65,17 +65,9 @@
             Write-Host 'Repozytorium juz ma te same pliki. Nie ma nic do wyslania.'
         } else { throw 'Blad porownania zmian Git.' }
 
-        & gh release view $tag --repo $repo *> $null
-        if ($LASTEXITCODE -eq 0) {
-            Write-Host "UWAGA: Wydanie $tag juz istnieje. Nie nadpisuje go automatycznie."
-        } else {
-            & gh release create $tag --repo $repo --target main --title "Soulbound Soundpack v1.5.7" --notes-file (Join-Path $dest 'CHANGELOG_PL.txt') --latest
-            if ($LASTEXITCODE -ne 0) { throw 'Nie udalo sie opublikowac wydania GitHub.' }
-            Write-Host "SUKCES: Wydanie $tag zostalo opublikowane."
-        }
-        Write-Host 'GitHub Actions doda Soulbound-Soundpack.zip do Assets wydania.'
+        Write-Host 'Kod wypchniety. GitHub Actions automatycznie zbuduje ZIP i opublikuje wydanie.'
         Write-Host "Sprawdz: https://github.com/$repo/actions"
-        Write-Host "Wydanie: https://github.com/$repo/releases/tag/$tag"
+        Write-Host "Wydania: https://github.com/$repo/releases"
     }
     catch {
         Write-Host ('BLAD: ' + $_.Exception.Message)

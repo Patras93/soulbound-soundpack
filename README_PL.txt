@@ -1,48 +1,37 @@
-SOULBOUND SOUNDPACK v1.5.7 — GITHUB I GENERIC MUD
+SOULBOUND SOUNDPACK v1.5.8 — INSTALACJA I AUTOMATYCZNA PUBLIKACJA
 
-REPOZYTORIUM: https://github.com/Patras93/soulbound-soundpack
+Repozytorium: https://github.com/Patras93/soulbound-soundpack
+Wydania: https://github.com/Patras93/soulbound-soundpack/releases
 
-WERSJA I ZAWARTOSC
-- Soundpack Lua, pack.toml, wszystkie 66 OGG, polski changelog.
-- Wbudowany w pack.toml adres origin kieruje do stalego pliku
-  Soulbound-Soundpack.zip w najnowszym zwyklym wydaniu GitHub.
-- Polecenie "sbs updater" wyswietla pomoc.
-
-PIERWSZA PUBLIKACJA — SKRYPT WINDOWS
-1. Rozpakuj caly ZIP zrodlowy do oddzielnego folderu.
-2. Zainstaluj Git for Windows i GitHub CLI, jesli ich nie masz:
-   winget install --id Git.Git -e
-   winget install --id GitHub.cli -e
-3. Otworz nowy PowerShell w katalogu rozpakowanej paczki.
-4. Uruchom: powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\PUBLIKUJ_NA_GITHUB.ps1
-   Albo uruchom PUBLIKUJ_NA_GITHUB.cmd.
-5. Zaloguj sie w GitHub CLI, jesli zostaniesz o to poproszony.
-6. Skrypt skopiuje pliki do repozytorium i utworzy wydanie v1.5.7.
-7. Sprawdz GitHub Actions. Po zakonczeniu procesu plik
-   Soulbound-Soundpack.zip powinien byc w Assets wydania:
-   https://github.com/Patras93/soulbound-soundpack/releases/tag/v1.5.7
-8. Jesli Actions zglosi brak uprawnien do zapisu Releases, w repozytorium
-   wejdź w Settings > Actions > General > Workflow permissions i ustaw
-   Read and write permissions, jesli opcja jest dostepna.
-
-DLA ZNAJOMYCH
-1. Pobierz Soulbound-Soundpack.zip z GitHub Releases > Assets.
-2. Rozpakuj do folderu z pack.toml, soundpack.lua i sounds.
+INSTALACJA DLA GRACZY
+1. Pobierz plik Soulbound-Soundpack.zip z sekcji Assets najnowszego wydania.
+2. Rozpakuj ZIP do folderu, w ktorym sa pack.toml, soundpack.lua i sounds.
 3. W Generic MUD wybierz Soundpacks > Set up a soundpack from a folder.
-4. Wybierz rozpakowany folder, wlacz pakiet w swiecie Soulbound i polacz sie.
-5. Przy kolejnych wydaniach wybierz Soundpacks > Manage installed soundpacks >
-   Update from source i ponownie polacz sie z gra.
+4. Wskaz folder, aktywuj dla swiata Soulbound i polacz sie.
+5. Przy kolejnej wersji wybierz Soundpacks > Manage installed soundpacks >
+   Update from source i polacz sie ponownie. Nie trzeba ponownie instalowac.
 
-WAŻNE OGRANICZENIE GENERIC MUD v0.23.1
-Automatyczne sprawdzanie aktualizacji i komenda /update dzialaja tylko
-z repozytoriami rozpoznawanymi przez kod klienta. Nasze nowe repozytorium
-ma aktualizacje przez Update from source, ale bez automatycznego alertu.
+PUBLIKACJA NOWYCH WERSJI — AUTOMATYCZNA
+1. Zmien dzwieki lub skrypt i zwieksz numer wersji w pack.toml,
+   np. z 1.5.8 na 1.5.9.
+2. Wypchnij zmiany na galaz main repozytorium GitHub.
+3. GitHub Actions sam zbuduje ZIP, sprawdzi pliki, utworzy Release
+   v1.5.9 i dolaczy Soulbound-Soundpack.zip do Assets.
+4. Nie trzeba recznie tworzyc tagu ani klikac Publish release.
+5. Przebieg sprawdzisz na stronie:
+   https://github.com/Patras93/soulbound-soundpack/actions
 
-KOLEJNE WYDANIA
-Zmien kod i/lub nagrania, podnies wersje w pack.toml, wypchnij pliki
-na GitHub i utworz nowe zwykle wydanie, np. v1.5.8. Workflow zbuduje
-zaktualizowany plik Soulbound-Soundpack.zip. Nie zmieniaj stalej nazwy assetu.
+PUBLIKACJA Z WINDOWS
+Jesli pracujesz na rozpakowanej paczce, mozesz uruchomic
+PUBLIKUJ_NA_GITHUB.cmd. Skrypt wysyla pliki na main; GitHub Actions
+automatycznie publikuje wydanie. Wymagane Git for Windows oraz
+GitHub CLI i logowanie do wlasnego konta.
 
-BEZPIECZENSTWO
-Nie wrzucaj haseł ani tokenow. Nie publikuj nagran bez uprawnien
-redystrybucyjnych. Zachowaj kopie lokalnego soundpacku przed instalacja.
+UWAGA
+- Uprawnienia Actions: Settings > Actions > General >
+  Workflow permissions > Read and write, jesli wymagane.
+- Workflow nie nadpisuje istniejacego wydania o tym samym numerze.
+- Generic MUD v0.24.0 nie powiadamia automatycznie o aktualizacjach
+  tego niestandardowego repozytorium; gracze uzywaja Update from source.
+- Nie publikuj nagran bez praw do redystrybucji ani hasel/tokenow.
+- Zachowaj lokalna kopie przed testowaniem nowych zmian.
