@@ -1,4 +1,4 @@
-# Soulbound Soundpack v1.6.0
+# Soulbound Soundpack v1.6.1
 
 Natywny soundpack Lua dla Generic MUD v0.24.0+, dopasowany do Soulbound v107.00.0. Zawiera **82 OGG**: ogloszenia wydarzen, kroki miejskie i podziemne oraz awans Soul Level. Zachowano wszystkie 66 dotychczasowych nagran i dzwiek eventu x2 EXP.
 

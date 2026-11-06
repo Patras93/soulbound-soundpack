@@ -1,40 +1,14 @@
-SOULBOUND SOUNDPACK v1.6.0 — ZMIANY (PL)
+SOULBOUND SOUNDPACK v1.6.1 — POPRAWKA ŁADOWANIA LUA
 
-ZGODNOSC
-- Baza: opublikowany Soulbound Soundpack v1.5.9 i Generic MUD v0.24.0.
-- Komunikaty rozpoznawane na podstawie kodu Soulbound v107.00.0.
-- Soulbound v108 nie byl podstawa tej aktualizacji (kod roboczy).
+- Naprawiono błąd składni "attempt to assign to const variable part"
+  w rozpoznawaniu kwot nagród za questy. Zmienna pętli nie jest
+  już modyfikowana; przetwarzanie złota, srebra i mithrilu bez zmian.
+- Dodano do GitHub Actions kontrolę składni w interpreterze Lupa
+  (takim jak w Generic MUD), oprócz dotychczasowych testów Lua 5.4.
+- Zachowano wszystkie 82 pliki OGG i cały zakres wydania v1.6.0:
+  eventy bossów, kroki miast oraz jaskiń/krypt, awans Duszy.
+- Event podwójnego EXP i jego dotychczasowy dźwięk bez zmian.
+- Zgodność: Soulbound v107.00.0 oraz Generic MUD v0.24.0.
 
-NOWE DZWIEKI (16 OGG)
-- announce.ogg: start globalnego wydarzenia świata, eventu z bossem lub
-  ogloszenia wydarzenia przez administracje. Krotka blokada dubli.
-  Bez zmian oryginalnego double exp.ogg dla wydarzenia x2 EXP.
-- sounds/steps/1.ogg ... 10.ogg: dziesiec kolejnych odglosow krokow
-  po udanym przejsciu do miejskiej lokacji. Brak dzwieku za look,
-  exits, probe ruchu, zablokowany ruch, teleport lub plywanie.
-- sounds/steps/caves/1.ogg ... 4.ogg: niezalezny cykl dla jaskin,
-  krypt, katakumb i podziemi, tylko po potwierdzonym przejsciu.
-- sounds/events/soul level.ogg: tylko rzeczywisty awans Soul Level,
-  nie zwykle Soul XP, Soul Tier, biegosc ani poziom postaci.
-
-NOWE KOMENDY
-- sbs steps on/off/status/test — kroki w miastach.
-- sbs caves on/off/status/test — kroki w jaskiniach i kryptach.
-- sbs test announce — podglad wydarzenia.
-- sbs test soullevel — podglad awansu Duszy.
-- Istniejace komendy i kanaly v1.5.9 zachowane.
-
-TESTY
-- 54 scenariusze dotychczasowe i ogloszenia.
-- 18 scenariuszy chodzenia po miastach.
-- 28 scenariuszy chodzenia w jaskiniach/kryptach.
-- 16 scenariuszy awansu Soul Level.
-- OGG 82/82 dekoduja sie bez bledu; kontrola integralnosci ZIP.
-
-UWAGI
-- Rozpoznawanie miejsc wynika z aktualnego kodu gry v107; nowe
-  niestandardowe lokacje moga wymagac dopisania nazw lub stref.
-- Testy symuluja komunikaty serwera. Prawdziwy odsluch na Windows
-  podczas rozgrywki w Generic MUD pozostaje do potwierdzenia.
-- GitHub Actions publikuje ZIP automatycznie PO wyslaniu kodu na main.
-  Samo przygotowanie lokalnego ZIP-a nie oznacza publikacji.
+TESTY: Lua 5.4 (scenariusze funkcjonalne); Lupa (składnia)
+  — muszą przejść w GitHub Actions przed publikacją wydania.

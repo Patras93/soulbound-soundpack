@@ -1,4 +1,4 @@
-SOULBOUND SOUNDPACK v1.6.0 — INSTRUKCJA (PL)
+SOULBOUND SOUNDPACK v1.6.1 — INSTRUKCJA (PL)
 
 Projekt: https://github.com/Patras93/soulbound-soundpack
 Wydania: https://github.com/Patras93/soulbound-soundpack/releases
@@ -40,7 +40,7 @@ PUBLIKACJA NOWEGO WYDANIA PRZEZ GITHUB
 2. Uruchom PUBLIKUJ_NA_GITHUB.cmd. Musisz miec Git i GitHub CLI,
    a konto GH musi miec uprawnienia do repozytorium Patras93.
 3. Skrypt wgra wszystkie OGG, kod i testy na galaz main.
-4. GitHub Actions wykona testy, utworzy Release v1.6.0 i doda
+4. GitHub Actions wykona testy, utworzy Release v1.6.1 i doda
    Soulbound-Soundpack.zip automatycznie. W serwisie sprawdz Actions.
 5. Nie tworz recznie tagu ani Release; nie wgrywaj pojedynczych OGG
    przez przegladarke.

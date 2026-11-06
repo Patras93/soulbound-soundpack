@@ -38,6 +38,11 @@ jobs:
             echo "TEST: $test"
             lua5.4 "$test" ../../soundpack.lua
           done
+      - name: Sprawdz skladnie w silniku Lua Generic MUD (Lupa)
+        shell: bash
+        run: |
+          python -m pip install --disable-pip-version-check 'lupa>=2.0'
+          python .github/tests/test_lupa_syntax.py soundpack.lua
       - name: Odczytaj wersje i zweryfikuj tag
         shell: bash
         run: |

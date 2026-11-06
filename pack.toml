@@ -1,6 +1,6 @@
 id = "soulbound-soundpack-twoje-ogg"
 name = "Soulbound Soundpack - Twoje OGG"
-version = "1.6.0"
+version = "1.6.1"
 author = "Soulbound community"
 description = "Soulbound SOUND_EVENT i komunikaty tekstowe; Generic MUD 0.24.0+; 82 OGG; eventy, kroki, awans Duszy"
 dialect = "lua"
