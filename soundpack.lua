@@ -1,5 +1,5 @@
--- SOULBOUND SOUNDPACK v1.5.9 - Native Generic MUD (mud.play)
--- Zrodlo: Soulbound v12.00.8 (SOUND_EVENT + komunikaty tekstowe). Tylko pliki OGG uzytkownika.
+-- SOULBOUND SOUNDPACK v1.6.0 - Native Generic MUD (mud.play)
+-- Komunikaty ruchu i strefy: zweryfikowane w Soulbound v107.00.0. SOUND_EVENT pozostaje kompatybilny.
 -- Regula bezpieczenstwa: brak dzwieku jest lepszy niz falszywy dzwiek.
 local active, volume = true, 0.7
 -- Kanaly: sb_cond_mob = petla muzyki (ciszej), sb_cond_player = stan HP,
@@ -9,6 +9,15 @@ local active, volume = true, 0.7
 local music_enabled=true
 local music_mix=0.25 -- 25% glosnosci efektow; osobno konfigurowalne
 local music_changes=0
+local city_steps_enabled=true
+local city_step_index=0
+local city_step_total=0
+local cave_steps_enabled=true
+local cave_step_index=0
+local cave_step_total=0
+local city_walk_target=nil
+local city_arrived_target=nil
+local city_step_deadline=0
 local seen, state = {}, {mob=nil,player=nil,area=nil,hp=nil,mana=nil,full=false}
 local cap, last_xp = nil,nil
 local cap_half_seen, cap_full_seen = false,false
@@ -76,7 +85,7 @@ local function play(path,channel,delay,force)
  return true
 end
 local fx={
- achievement='events/achievement.ogg', allfull='events/allfull.ogg', cap='events/cap.ogg', area='events/change area.ogg',
+ announce='events/announce.ogg', soullevel='events/soul level.ogg', achievement='events/achievement.ogg', allfull='events/allfull.ogg', cap='events/cap.ogg', area='events/change area.ogg',
  wrong='events/command wrong.ogg', crapexp='events/crapexp.ogg', daygift='events/daygift.ogg', doubleexp='events/double exp.ogg',
  ep='events/ep.ogg', exp='events/exp thwack1.ogg', fame='events/fame.ogg', halfcap='events/halfcap.ogg',
  hpfull='events/hpfull.ogg', leavegame='events/leave game.ogg', mana_alarm='events/mana alarm.ogg',
@@ -134,6 +143,140 @@ local function end_combat(reason)
  last_mob_hp=nil
  mob_name=nil
  look_mob=false
+end
+-- Miasto Dusz: nazwy pokoi ze zweryfikowanego katalogu v107 (strefa Miasto Dusz).
+-- Pozwala grac kroki takze przy prowadzeniu, gdzie serwer nie robi look().
+local city_rooms={
+ ['archiwum strazy']=true,
+ ['biblioteka kronik']=true,
+ ['cele straznicy']=true,
+ ['jadalnia strazy']=true,
+ ['karczma pod blekitnym plomieniem']=true,
+ ['komnata dowodcy strazy']=true,
+ ['koszary strazy']=true,
+ ['kuznia dusz']=true,
+ ['plac dusz']=true,
+ ['plac treningowy']=true,
+ ['pokoj przesluchan']=true,
+ ['port dusz']=true,
+ ['poludniowa brama']=true,
+ ['polnocna brama']=true,
+ ['rynek']=true,
+ ['sala lowcow nagrod']=true,
+ ['straznica glowna']=true,
+ ['targ rybny']=true,
+ ['ulica poludniowa']=true,
+ ['ulica polnocna']=true,
+ ['wielka tawerna najemnikow']=true,
+ ['wieza obserwacyjna strazy']=true,
+ ['zbrojownia strazy']=true,
+ ['swiatynia odrodzenia']=true,
+ }
+local function city_walk_reset()
+ city_walk_target=nil
+ city_arrived_target=nil
+ city_step_deadline=0
+end
+local function city_play_step()
+ city_walk_reset()
+ if not city_steps_enabled or not active or not in_world or player_downed then return end
+ -- Jedno krotkie OGG na jeden ukonczony krok. Kolejno 1..10 (bez losowych dubli).
+ local n=(city_step_index%10)+1
+ if play('steps/'..n..'.ogg','sb_city_steps',0) then
+  city_step_index=n
+  city_step_total=city_step_total+1
+ end
+end
+-- Jaskinie, krypty i podziemia: nazwy z katalogu v107; innym
+-- pokojom ufamy dopiero po potwierdzeniu nazwy i strefy.
+local cave_rooms={
+ ['blekitny tunel']=true,
+ ['galeria grzybow']=true,
+ ['glebia krypty']=true,
+ ['gniazdo lodowego smoka']=true,
+ ['grota krola goblinow']=true,
+ ['komnata lodowego krysztalu']=true,
+ ['komnata zejsciowa kopalni glebinowej']=true,
+ ['kotlina szamanow']=true,
+ ['nora lupow']=true,
+ ['nora wojenna']=true,
+ ['podziemny posterunek']=true,
+ ['pradawna sala lodu']=true,
+ ['przedsionek krypty']=true,
+ ['sala krypty']=true,
+ ['szczelina lodowca']=true,
+ ['tunel wejsciowy kopalni glebinowej']=true,
+ ['tunele zlomu']=true,
+ ['warsztat bombiarzy']=true,
+ ['wejscie do jaskin goblinow']=true,
+ ['wejscie do kopalni glebinowej']=true,
+ ['wejscie do lodowych jaskin']=true,
+ ['zamarzniete jezioro']=true,
+ }
+local function cave_zone(zone)
+ -- Konserwatywna lista stref; to nie jest wyszukiwanie dowolnego slowa
+ -- "jaskinia" w opisie, chacie ani w nazwie przeciwnika.
+ return zone=='podziemia' or zone=='jaskinie goblinow' or
+        zone=='jaskinia trolli' or zone=='lodowe jaskinie' or
+        zone=='krypta' or zone=='mityczna krypta' or
+        zone:match('^krypta[, :]') or zone:match('^mityczna krypta[, :]') or
+        zone:match('^katakumb') or zone:match('^jaskin') or
+        zone:match('^grota') or zone:match('^podziem')
+end
+local function is_crypt_floor_room(name)
+ if name:match('^krypta, pietro %d+') or name:match('^mityczna krypta, pietro %d+') then return true end
+ if not name:match('^pietro %d+:') then return false end
+ for _,token in ipairs({'katakumb','krypt','grobow','sarkofag','korytarz kosci','galeria umarlych','komnata pieczeci','nekropoli'}) do
+  if name:find(token,1,true) then return true end
+ end
+ return false
+end
+local function cave_play_step()
+ city_walk_reset()
+ if not cave_steps_enabled or not active or not in_world or player_downed then return end
+ local n=(cave_step_index%4)+1
+ if play('steps/caves/'..n..'.ogg','sb_cave_steps',0) then
+  cave_step_index=n
+  cave_step_total=cave_step_total+1
+ end
+end
+local function city_walk_on_line(s)
+ if not in_world then city_walk_reset();return end
+ -- Doslownie komunikat walk_room_transition, a nie komenda gracza.
+ -- Nie reaguje na plyniecie statkiem, teleport ani na wchodzenie przez brame.
+ local target=s:match('^idziesz .+%. cel: (.+)%.$')
+ if target then
+  city_walk_target=target
+  city_arrived_target=nil
+  city_step_deadline=counters.lines+30
+  return
+ end
+ if city_walk_target and counters.lines>city_step_deadline then city_walk_reset();return end
+ if city_walk_target then
+  local arrived=s:match('^docierasz do: (.+)%.$')
+  if arrived then
+   if arrived~=city_walk_target then city_walk_reset();return end
+   if city_rooms[arrived] then city_play_step()
+   elseif cave_rooms[arrived] or is_crypt_floor_room(arrived) then cave_play_step()
+   else city_arrived_target=arrived end
+   return
+  end
+  if s:match('^nie mozesz isc') or s:match('^teleportujesz sie') or
+     s:match('^doplywasz do:') or s:match('^wylogowano z konta') then
+   city_walk_reset();return
+  end
+  if city_arrived_target then
+   local room,zone=s:match('^lokalizacja:%s*(.-)%. strefa: (.+)%.$')
+   if not room then room,zone=s:match('^(.+)%. strefa: (.+)%.$') end
+   if room and zone then
+    if room==city_arrived_target and (zone=='miasto dusz' or zone:match('^miasto ')) then
+     city_play_step()
+    elseif room==city_arrived_target and cave_zone(zone) then
+     cave_play_step()
+    else city_walk_reset() end
+   end
+  end
+ end
 end
 local function sound(key,delay,channel,force)
  if fx[key] then
@@ -450,6 +593,7 @@ local function on_line(line)
  if debug_mode then say('LINIA # '..counters.lines..': '..last_line) end
  if s=='' then return end
  if s:match('^sound_event%s+') then on_sound_event(s);return end
+ city_walk_on_line(s)
  -- Serwer v12.00.8 rozglasza REALNY zgon dowolnego gracza wszystkim zalogowanym.
  -- Dzwiek TYLKO dla innej postaci; wlasna smierc ma mort + You died.
  -- Rozpoznawaj wylacznie naglowek globalny, nie wpisy w help/changes/czacie.
@@ -473,6 +617,7 @@ local function on_line(line)
   end
   sound_protocol = s:match('soulbound v12%.00%.8')~=nil or s:match('soulbound v1[3-9]%.')~=nil
   sound_kinds={};mob_hp_by_id={};focused_mob=nil;mob_sound_bucket=nil
+  city_walk_reset()
    cancel_pending_xp();quest_reward_in_progress=false;quest_money_until=-100000;quest_money_played=false;reset_quest_gold()
   if not in_world then
    end_combat('wejscie do gry')
@@ -487,11 +632,12 @@ local function on_line(line)
   if in_world then sound('leavegame',1) end
   end_combat('wyjscie z gry')
   in_world=false;player_downed=false;self_name=nil;state.player=nil;state.hp=nil;state.mana=nil;state.area=nil
+  city_walk_reset()
    cancel_pending_xp();quest_reward_in_progress=false;quest_money_until=-100000;reset_quest_gold()
   look_mob=false;mob_name=nil
   return
  end
- if s=='wylogowano z konta.' or s=='do zobaczenia.' then end_combat('rozlaczenie');in_world=false;player_downed=false;self_name=nil;reset_quest_gold();cancel_pending_xp();return end
+ if s=='wylogowano z konta.' or s=='do zobaczenia.' then end_combat('rozlaczenie');in_world=false;player_downed=false;self_name=nil;reset_quest_gold();cancel_pending_xp();city_walk_reset();return end
  -- Priorytet: kanaly musza zgadzac sie z naglowkiem, nie trescia wiadomosci.
  if s:match('^%[news%] administracja') then sound('news',1);return end
  if s:match('^daily login:%s*dzien %d+%. nagroda ') then sound('daygift',1);return end
@@ -626,6 +772,18 @@ local function on_line(line)
   xp_event_active=true -- to tylko status, bez dzwieku
   return
  end
+ -- Nowe wydarzenia świata i bossowie: tylko potwierdzone ogłoszenia
+ -- serwera; nie reagujemy na /eventy, listy, statusy ani Event x2 EXP.
+ -- Po kilku ogłoszeniach z tej samej rotacji gra jeden krótki sygnał.
+ if in_world and (
+     s:match('^wydarzenie swiata: .+! boss: .+%. miejsce: .+%. czas wydarzenia: 3 godziny%. prawdziwy boss, wspolny exp i lupy%.$') or
+     s:match('^wydarzenie swiata: .+%. miejsce: .+%. wydarzenie jest prawdziwa walka; solo i druzyny moga wziac udzial%.$') or
+     s:match('^wydarzenie swiata: .+ rozpoczyna .+! obozowisko: .+%. mozna walczyc solo lub z druzyna%.$') or
+     s:match('^wydarzenie admina: .+%. potwory beda dostepne przez maksymalnie 30 minut poza walka%.$')
+    ) then
+  sound('announce',8,'sb_announce')
+  return
+ end
  -- Dzwiek recall WYŁĄCZNIE na potwierdzenie serwera po zmianie room_id.
  -- Wpisanie /, pokoj Swiatyni, podsumowanie druzyny i samo pojawienie
  -- sie innego gracza nie sa potwierdzeniem teleportacji NASZEJ postaci.
@@ -713,6 +871,10 @@ local function on_line(line)
   end
 if s:match('^fame zaliczone') then sound('fame',1);return end
  if s:match('^wazne odkrycie: %+%d+ ep') then sound('ep',1);return end
+ -- Zweryfikowany komunikat prawdziwego awansu Soul Level z player/character.py v107.
+ -- Nie odtwarzamy przy Soul XP, Soul Tier, Mastery, score ani poziomie postaci.
+ -- Odstep pozwala nie restartowac 6,6-sekundowego jingle przy serii awansow.
+ if s:match('^bron duszy osiaga soul level %d+%.$') then sound('soullevel',6,'sb_soul_level');return end
  if s:match('^level postaci wzrasta do %d+') then sound('level',2);return end
  if s:match('^.+:%s*bieglosc rosnie do %d+%.$') or (has(s,'bieglosc') and (has(s,'level') or has(s,'poziom')) and (has(s,'wzrasta do') or has(s,'awansuje na'))) then sound('joblevel',2);return end
  if s:match('^uczysz sie umiejetnosci ') or s:match('^nauczono umiejetnosci ') or s:match('^nauczono%. .+ zaczyna na skill level 1%.$') then sound('learned',1);return end
@@ -783,11 +945,23 @@ mud.alias('sbs *',function(line,captures)
  arg=norm(arg)
  if arg=='on' then active=true;say('ON')
  elseif arg=='off' then active=false;end_combat('soundpack off');reset_quest_gold();cancel_pending_xp();say('OFF')
- elseif arg=='status' then say('v1.5.9 '..(active and 'ON' or 'OFF')..'; efekty '..math.floor(volume*100)..'%; muzyka '..(music_enabled and 'ON' or 'OFF')..' '..math.floor(music_mix*100)..'%; cap '..tostring(cap or 'nieznany')..'; odebrane linie '..counters.lines..'; dzwieki '..counters.played)
- elseif arg=='diag' then say('DIAG v1.5.9: w_swiecie='..tostring(in_world)..'; linie='..counters.lines..'; rozpoznania='..counters.events..'; odtworzenia='..counters.played..'; bledy='..counters.errors..'; mud.play='..(mud and mud.play and 'dostepny' or 'BRAK')..' (typ '..type(mud.play)..')'..'; ostatnie zdarzenie='..last_event..'; ostatnia linia='..last_line..'; ostatni blad='..last_error..'; walki='..tostring(in_combat)..'; powalony='..tostring(player_downed)..'; stop muzyki='..stopped_music..'; zmiany utworu='..music_changes..'; muzyka='..(music_enabled and 'ON' or 'OFF')..' '..math.floor(music_mix*100)..'%; przyczyna='..last_stop_reason..'; slash=przekazywany bezposrednio; recall_odp='..recall_confirms..'; x2_start='..xp_event_starts..'; x2_aktywny='..tostring(xp_event_active)..'; sound_event='..tostring(sound_protocol_count)..'; nowy_protokol='..tostring(sound_protocol)..'; ostatni_marker='..last_sound_marker)
+ elseif arg=='status' then say('v1.6.0 '..(active and 'ON' or 'OFF')..'; efekty '..math.floor(volume*100)..'%; muzyka '..(music_enabled and 'ON' or 'OFF')..' '..math.floor(music_mix*100)..'%; kroki_miasto '..(city_steps_enabled and 'ON' or 'OFF')..'; kroki_podziemia '..(cave_steps_enabled and 'ON' or 'OFF')..'; cap '..tostring(cap or 'nieznany')..'; odebrane linie '..counters.lines..'; dzwieki '..counters.played)
+ elseif arg=='diag' then say('DIAG v1.6.0: w_swiecie='..tostring(in_world)..'; linie='..counters.lines..'; rozpoznania='..counters.events..'; odtworzenia='..counters.played..'; bledy='..counters.errors..'; mud.play='..(mud and mud.play and 'dostepny' or 'BRAK')..' (typ '..type(mud.play)..')'..'; ostatnie zdarzenie='..last_event..'; ostatnia linia='..last_line..'; ostatni blad='..last_error..'; walki='..tostring(in_combat)..'; powalony='..tostring(player_downed)..'; stop muzyki='..stopped_music..'; zmiany utworu='..music_changes..'; muzyka='..(music_enabled and 'ON' or 'OFF')..' '..math.floor(music_mix*100)..'%; przyczyna='..last_stop_reason..'; slash=przekazywany bezposrednio; recall_odp='..recall_confirms..'; x2_start='..xp_event_starts..'; x2_aktywny='..tostring(xp_event_active)..'; sound_event='..tostring(sound_protocol_count)..'; nowy_protokol='..tostring(sound_protocol)..'; ostatni_marker='..last_sound_marker)
  elseif arg=='watch on' then debug_mode=true;say('Podglad linii WLACZONY; sbs watch off wylacza')
  elseif arg=='watch off' then debug_mode=false;say('Podglad linii WYLACZONY')
- elseif arg=='coverage' then say('Soulbound 12.00.8: SOUND_EVENT EXP_BANK/HALF_CAP/FULL_CAP/MOB_HP/PLAYER_LOGIN/PLAYER_LOGOUT/TELL_RECEIVED/REPLY_RECEIVED obslugiwane. Pozostale zdarzenia na podstawie potwierdzonego tekstu. OGG nie dodaja nowych zdarzen po stronie serwera.')
+ elseif arg=='coverage' then say('Soulbound v107.00.0: SOUND_EVENT EXP_BANK/HALF_CAP/FULL_CAP/MOB_HP/PLAYER_LOGIN/PLAYER_LOGOUT/TELL_RECEIVED/REPLY_RECEIVED obslugiwane. Pozostale zdarzenia na podstawie potwierdzonego tekstu. OGG nie dodaja nowych zdarzen po stronie serwera.')
+ elseif arg=='caves off' then cave_steps_enabled=false;city_walk_reset();say('Kroki podziemne OFF')
+ elseif arg=='caves on' then cave_steps_enabled=true;city_walk_reset();say('Kroki podziemne ON')
+ elseif arg=='caves status' then say('Kroki jaskinie/krypty '..(cave_steps_enabled and 'ON' or 'OFF')..'; odegrane '..cave_step_total..'; nastepny plik '..((cave_step_index%4)+1)..'.ogg')
+ elseif arg=='caves test' then
+  local n=(cave_step_index%4)+1
+  if play('steps/caves/'..n..'.ogg','sb_cave_preview',0,true) then say('Podglad podziemnego kroku '..n..'.ogg') end
+ elseif arg=='steps off' then city_steps_enabled=false;city_walk_reset();say('Kroki miejskie OFF')
+ elseif arg=='steps on' then city_steps_enabled=true;city_walk_reset();say('Kroki miejskie ON')
+ elseif arg=='steps status' then say('Kroki miejskie '..(city_steps_enabled and 'ON' or 'OFF')..'; odegrane '..city_step_total..'; nastepny plik '..((city_step_index%10)+1)..'.ogg; na podstawie v107')
+ elseif arg=='steps test' then
+  local n=(city_step_index%10)+1
+  if play('steps/'..n..'.ogg','sb_city_preview',0,true) then say('Podglad kroku '..n..'.ogg') end
  elseif arg=='musicstop' then end_combat('reczne zatrzymanie');say('Zatrzymano muzyke kondycji mobow')
  elseif arg=='music off' then music_enabled=false;stop_mob_music('muzyka OFF');mob_sound_bucket=nil;say('Muzyka walki OFF; efekty gry zostaja')
  elseif arg=='music on' then
@@ -831,7 +1005,7 @@ mud.alias('sbs *',function(line,captures)
   elseif fx[kind] then sound(kind,0,'sb_test_'..kind,true)
   else say('Brak przypisania do '..kind) end
  elseif arg=='updater' then say('Aktualizacja: Generic MUD > Soundpacks > Manage installed soundpacks > Update from source. Wymaga pakietu z oficjalnego GitHub Release; po aktualizacji polacz ponownie.')
- elseif arg=='help' then say('sbs on/off/status/updater/diag/coverage/music on/off/status/musicvol 0-100/musicstop/testmob POZIOM/testplayer POZIOM/teststop/probe/watch on/off/vol 0-100/test NAZWA')
+ elseif arg=='help' then say('sbs on/off/status/updater/diag/coverage/steps on/off/status/test/caves on/off/status/test/music on/off/status/musicvol 0-100/musicstop/testmob POZIOM/testplayer POZIOM/teststop/probe/watch on/off/vol 0-100/test NAZWA')
  else say('Wpisz sbs help') end
 end)
 -- Osobny cichy kanal: znaczniki SOUND_EVENT sa techniczne i nie maja
@@ -843,4 +1017,4 @@ mud.trigger([[^SOUND_EVENT[ ]+]],function(line,captures) on_line(line) end,{rege
 -- Znaczniki SOUND_EVENT sa obslugiwane tylko przez pierwszy wyzwalacz.
 -- W przeciwnym razie player_login / tell_received mogly uruchomic efekt dwa razy.
 mud.trigger([[^(?!SOUND_EVENT[ ]+).+]],function(line,captures) on_line(line) end,{regex=true})
-say('Zaladowano v1.5.9 dla Soulbound v12.00.8 - native Generic MUD, tylko Twoje OGG.')
+say('Zaladowano v1.6.0 dla Soulbound v107.00.0 - Generic MUD, Twoje OGG.')

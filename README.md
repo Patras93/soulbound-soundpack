@@ -1,13 +1,9 @@
-# Soulbound Soundpack dla Generic MUD
+# Soulbound Soundpack v1.6.0
 
-Natywny soundpack Lua, 66 nagrań OGG — **v1.5.9**, Generic MUD v0.24.0+.
+Natywny soundpack Lua dla Generic MUD v0.24.0+, dopasowany do Soulbound v107.00.0. Zawiera **82 OGG**: ogloszenia wydarzen, kroki miejskie i podziemne oraz awans Soul Level. Zachowano wszystkie 66 dotychczasowych nagran i dzwiek eventu x2 EXP.
 
-**Instalacja:** pobierz `Soulbound-Soundpack.zip` z [najnowszego wydania](https://github.com/Patras93/soulbound-soundpack/releases/latest), rozpakuj i wybierz `Soundpacks → Set up a soundpack from a folder`.
+**Instalacja:** pobierz najnowszy `Soulbound-Soundpack.zip` z [Releases](https://github.com/Patras93/soulbound-soundpack/releases/latest). Aktualizacja przez **Soundpacks → Manage installed soundpacks → Update from source**, potem ponowne polaczenie.
 
-**Aktualizacja:** `Soundpacks → Manage installed soundpacks → Update from source`, następnie ponownie połącz się z grą. Klient nie wykrywa automatycznie aktualizacji każdego repozytorium.
+**Publikacja:** wyslij zmieniony kod na `main` (np. `PUBLIKUJ_NA_GITHUB.cmd`), a GitHub Actions sam sprawdzi skrypt, utworzy Release i doda ZIP. Pelne informacje: `README_PL.txt`, `CHANGELOG_PL.txt`.
 
-**Publikacja:** nowa wersja w `pack.toml` wysłana na `main` uruchamia GitHub Actions, które sprawdzają Lua i OGG oraz automatycznie tworzą Release z paczką ZIP.
-
-Nowe komendy `sbs music on/off/status`, `sbs musicvol 0-100`, `sbs testmob ...`, `sbs testplayer ...`. Więcej w `README_PL.txt` i jednym `CHANGELOG_PL.txt`.
-
-Przed publicznym udostępnieniem nagrań sprawdź licencje do redystrybucji.
+Nagrania udostepniaj wyłącznie wtedy, gdy masz prawo je rozpowszechniac.

@@ -1,32 +1,40 @@
-SOULBOUND SOUNDPACK v1.5.9 — ZMIANY
+SOULBOUND SOUNDPACK v1.6.0 — ZMIANY (PL)
 
-- Muzyka kondycji mobow domyslnie gra na 25% glosnosci efektow
-  (regulacja: sbs musicvol 0-100); pozostale OGG sa bez zmian.
-- Zmiana progu HP podmienia utwor w tym samym kanale BASS bez
-  dodatkowego mud.stop, bez restartu przy niezmienionym progu.
-- Komendy sbs music on/off/status, sbs musicvol, sbs musicstop.
-  Wylaczenie muzyki nie wylacza odglosow gry, nagrod ani NVDA.
-- Podglad dzwiekow: sbs testmob <stan>, sbs testplayer <stan>
-  i sbs teststop. Podglad mobow gra raz, bez petli; nie wchodzi
-  w kanal aktualnej muzyki walki.
-- Naprawiono zatrzymywanie muzyki przy zmianie postaci nawet,
-  gdy serwer wysle nowe powitanie bez starego potwierdzenia wyjscia.
-- Po smierci, wylogowaniu lub wylaczeniu soundpacku kasowane sa
-  zalegle nagrody monetarne; EXP nadal jest wyplacany w grze.
-- Zachowano rozdzielenie quest complete.ogg i receive gold.ogg,
-  poprawki EP, Fame, NEWS, telemetrii i wszystkie 66 OGG.
-- Nowe wydania publikuja sie automatycznie po aktualizacji pack.toml
-  na GitHubie. Dodano testy Lua w workflow przed publikacja.
+ZGODNOSC
+- Baza: opublikowany Soulbound Soundpack v1.5.9 i Generic MUD v0.24.0.
+- Komunikaty rozpoznawane na podstawie kodu Soulbound v107.00.0.
+- Soulbound v108 nie byl podstawa tej aktualizacji (kod roboczy).
 
-WERYFIKACJA
-- 45/45 scenariuszy funkcjonalnych Lua — PASS (lokalny interpreter).
-- 66/66 OGG dekodowalnych; pozostaja niezmienione wobec v1.5.8.
-- Test integralnosci i kompletnosci ZIP, zgodnosc pack.toml — PASS.
+NOWE DZWIEKI (16 OGG)
+- announce.ogg: start globalnego wydarzenia świata, eventu z bossem lub
+  ogloszenia wydarzenia przez administracje. Krotka blokada dubli.
+  Bez zmian oryginalnego double exp.ogg dla wydarzenia x2 EXP.
+- sounds/steps/1.ogg ... 10.ogg: dziesiec kolejnych odglosow krokow
+  po udanym przejsciu do miejskiej lokacji. Brak dzwieku za look,
+  exits, probe ruchu, zablokowany ruch, teleport lub plywanie.
+- sounds/steps/caves/1.ogg ... 4.ogg: niezalezny cykl dla jaskin,
+  krypt, katakumb i podziemi, tylko po potwierdzonym przejsciu.
+- sounds/events/soul level.ogg: tylko rzeczywisty awans Soul Level,
+  nie zwykle Soul XP, Soul Tier, biegosc ani poziom postaci.
 
-OGRANICZENIA
-- Prawdziwy crossfade nie jest dostepny przez publiczne API
-  natywnego Lua Generic MUD v0.24.0 (brak mud.slide/fade_away).
-  Zmiana utworu jest bez dodatkowego wywolania stop, nie fade.
-- Testow odsluchowych w Generic MUD na Windows jeszcze nie bylo.
-- Generic MUD nie informuje automatycznie o nowych wydaniach
-  dowolnych repozytoriow; Update from source pozostaje reczne.
+NOWE KOMENDY
+- sbs steps on/off/status/test — kroki w miastach.
+- sbs caves on/off/status/test — kroki w jaskiniach i kryptach.
+- sbs test announce — podglad wydarzenia.
+- sbs test soullevel — podglad awansu Duszy.
+- Istniejace komendy i kanaly v1.5.9 zachowane.
+
+TESTY
+- 54 scenariusze dotychczasowe i ogloszenia.
+- 18 scenariuszy chodzenia po miastach.
+- 28 scenariuszy chodzenia w jaskiniach/kryptach.
+- 16 scenariuszy awansu Soul Level.
+- OGG 82/82 dekoduja sie bez bledu; kontrola integralnosci ZIP.
+
+UWAGI
+- Rozpoznawanie miejsc wynika z aktualnego kodu gry v107; nowe
+  niestandardowe lokacje moga wymagac dopisania nazw lub stref.
+- Testy symuluja komunikaty serwera. Prawdziwy odsluch na Windows
+  podczas rozgrywki w Generic MUD pozostaje do potwierdzenia.
+- GitHub Actions publikuje ZIP automatycznie PO wyslaniu kodu na main.
+  Samo przygotowanie lokalnego ZIP-a nie oznacza publikacji.

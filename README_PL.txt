@@ -1,48 +1,51 @@
-SOULBOUND SOUNDPACK v1.5.9 — INSTRUKCJA
+SOULBOUND SOUNDPACK v1.6.0 — INSTRUKCJA (PL)
 
-GitHub: https://github.com/Patras93/soulbound-soundpack
+Projekt: https://github.com/Patras93/soulbound-soundpack
 Wydania: https://github.com/Patras93/soulbound-soundpack/releases
+GRA: Soulbound v107.00.0, Generic MUD v0.24.0+.
 
-INSTALACJA
-1. Pobierz Soulbound-Soundpack.zip z ostatniego wydania (Assets).
-2. Rozpakuj ZIP. Otworz Generic MUD > Soundpacks > Set up a soundpack
-   from a folder i wskaz folder z pack.toml i soundpack.lua.
-3. Wlacz pakiet dla swiata Soulbound i polacz sie ponownie.
-4. Jesli masz juz v1.5.8, zamiast instalowac od nowa wybierz
-   Soundpacks > Manage installed soundpacks > Update from source.
-   Polacz sie ponownie, aby zaladowac nowy skrypt.
+INSTALACJA DLA GRACZY
+1. Ze strony GitHub Releases pobierz Soulbound-Soundpack.zip.
+2. Wypakuj folder z pack.toml, soundpack.lua i sounds.
+3. W Generic MUD: Soundpacks > Set up a soundpack from a folder.
+4. Wlacz soundpack dla swiata Soulbound i polacz sie ponownie.
+5. Kolejna wersja: Soundpacks > Manage installed soundpacks >
+   Update from source, nastepnie ponowne polaczenie z gra.
 
-KOMENDY
-sbs status          — stan i poziomy glosnosci
-sbs music status    — stan muzyki
-sbs music off       — wylacza tylko muzyke mobow
-sbs music on        — wlacza muzyke mobow
-sbs musicvol 25     — muzyka 25% glosnosci efektow (0-100)
-sbs musicstop       — zatrzymuje aktualna muzyke walki
-sbs vol 70          — glosnosc efektow 70% (0-100)
-sbs test ep         — test nagrody EP
-sbs test gold       — test nagrody monetarnej
-sbs testmob awful   — podglad muzyki moba (odtwarza raz)
-sbs testplayer awful — podglad glosu kondycji gracza
-sbs teststop        — zatrzymuje podglady
-sbs diag            — licznik zdarzen, bledow i ostatnich danych
-sbs updater         — informacja o aktualizacji
+DODANE EFEKTY
+- announce.ogg — wydarzenie swiata / boss / event administracji.
+- steps/1..10.ogg — kroki po miescie.
+- steps/caves/1..4.ogg — chodzenie po jaskiniach, kryptach, podziemiach.
+- soul level.ogg — awans Soul Level Broni Duszy.
+- Dzwiek wydarzenia x2 EXP nie zostal zmieniony.
 
-Stan moba ma poziomy: excellent, scratches, small wounds,
-quite a few, pretty hurt, big nasty, awful, dying. Dzwiek
-mob/died.ogg: sbs testmob died. Gracz nie ma dying ani died.
+KOMENDY KROKOW
+sbs steps on       — wlacz kroki miejskie
+sbs steps off      — wylacz kroki miejskie
+sbs steps status   — stan i licznik
+sbs steps test     — podglad kolejnego kroku
+sbs caves on       — wlacz kroki podziemne
+sbs caves off      — wylacz kroki podziemne
+sbs caves status   — stan i licznik
+sbs caves test     — podglad kolejnego kroku
+sbs test announce  — podglad dzwieku wydarzenia
+sbs test soullevel — podglad dzwieku awansu Duszy
+sbs music status  — stan muzyki mobow
+sbs musicvol 25   — glosnosc muzyki (0-100)
+sbs diag           — diagnostyka
+sbs updater        — instrukcja aktualizacji
 
-PUBLIKACJA NA GITHUB
-- Wprowadz zmiany w repozytorium i zwieksz version w pack.toml.
-- Wyslij commit na main (np. przez PUBLIKUJ_NA_GITHUB.cmd).
-- GitHub Actions automatycznie przetestuje Lua, sprawdzi pliki,
-  utworzy Release z nowym tagiem i dolaczy Soulbound-Soundpack.zip.
-- Nie tworz recznie taga i nie klikaj Publish release.
-- W razie odmowy zapisu sprawdz Settings > Actions > General >
-  Workflow permissions — Read and write.
+PUBLIKACJA NOWEGO WYDANIA PRZEZ GITHUB
+1. Rozpakuj ZRODLOWY ZIP do katalogu z pack.toml i PUBLIKUJ_NA_GITHUB.cmd.
+2. Uruchom PUBLIKUJ_NA_GITHUB.cmd. Musisz miec Git i GitHub CLI,
+   a konto GH musi miec uprawnienia do repozytorium Patras93.
+3. Skrypt wgra wszystkie OGG, kod i testy na galaz main.
+4. GitHub Actions wykona testy, utworzy Release v1.6.0 i doda
+   Soulbound-Soundpack.zip automatycznie. W serwisie sprawdz Actions.
+5. Nie tworz recznie tagu ani Release; nie wgrywaj pojedynczych OGG
+   przez przegladarke.
 
-UWAGA
-- Nowe OGG publikuj tylko majac prawa do ich redystrybucji.
-- Prawdziwy crossfade jest niedostepny przez natywne Lua 0.24.0.
-- Auto-publikacja po commicie nie oznacza automatycznej aktualizacji
-  na komputerach graczy. Update from source wymaga wybrania w menu.
+UWAGA: automatyczne PUBLIKOWANIE na GitHub po git push nie jest
+równoznaczne z automatycznym POBIERANIEM na komputerach graczy;
+Generic MUD ma opcje Update from source uruchamiana z menu.
+Przy publicznym udostepnianiu nagran nalezy miec prawa do redystrybucji.

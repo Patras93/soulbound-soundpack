@@ -1,81 +1,73 @@
-# Soulbound Soundpack v1.5.8 - publikacja w repozytorium i wydanie GitHub Releases
-# Uruchom na Windows po rozpakowaniu calego ZIP-a.
+﻿# Soulbound Soundpack v1.6.0 — przeslij kod i OGG, GitHub Actions publikuje Release.
 & {
     $ErrorActionPreference = 'Stop'
     $repo = 'Patras93/soulbound-soundpack'
     $root = Split-Path -Parent $PSCommandPath
-    $tag = 'v1.5.8'
-    $dest = Join-Path ([IO.Path]::GetTempPath()) ('SoulboundGithub-' + [guid]::NewGuid().ToString('N'))
+    $tag = 'v1.6.0'
     $repoUrl = 'https://github.com/Patras93/soulbound-soundpack.git'
+    $dest = Join-Path ([IO.Path]::GetTempPath()) ('SoulboundGit-' + [guid]::NewGuid().ToString('N'))
     try {
-        if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
-            throw 'Brak Git for Windows. Zainstaluj: winget install --id Git.Git -e'
-        }
-        if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
-            throw 'Brak GitHub CLI. Zainstaluj: winget install --id GitHub.cli -e'
-        }
-        foreach ($f in @('pack.toml', 'soundpack.lua', 'README_PL.txt', 'CHANGELOG_PL.txt', '.github\workflows\release.yml', '.github\scripts\build_release.py')) {
-            if (-not (Test-Path -LiteralPath (Join-Path $root $f) -PathType Leaf)) { throw "Brak pliku $f" }
+        if (-not (Get-Command git -ErrorAction SilentlyContinue)) { throw 'Brak Git for Windows.' }
+        if (-not (Get-Command gh -ErrorAction SilentlyContinue)) { throw 'Brak GitHub CLI.' }
+        foreach ($f in @('pack.toml','soundpack.lua','README_PL.txt','CHANGELOG_PL.txt','.github\workflows\release.yml','.github\scripts\build_release.py','.github\tests\test_announce.lua')) {
+            if (-not (Test-Path -LiteralPath (Join-Path $root $f) -PathType Leaf)) { throw "Brak $f" }
         }
         $sounds = @(Get-ChildItem -LiteralPath (Join-Path $root 'sounds') -Recurse -File -Filter '*.ogg')
-        if ($sounds.Count -lt 1) { throw 'Brak OGG. Rozpakuj cala paczke, nie sam skrypt.' }
-        $manifestText = [IO.File]::ReadAllText((Join-Path $root 'pack.toml'))
-        if (-not $manifestText.Contains('origin = "https://github.com/Patras93/soulbound-soundpack/releases/latest/download/Soulbound-Soundpack.zip"')) {
-            throw 'Nieprawidlowy adres updatera w pack.toml.'
-        }
-        if (-not $manifestText.Contains('version = "1.5.7"')) { throw 'Nieprawidlowa wersja w pack.toml.' }
-
+        if ($sounds.Count -ne 82) { throw "Zla liczba OGG: $($sounds.Count); powinno byc 82. Rozpakuj caly ZIP." }
+        $manifest = [IO.File]::ReadAllText((Join-Path $root 'pack.toml'))
+        if (-not $manifest.Contains('version = "1.6.0"')) { throw 'Nieprawidlowa wersja pack.toml.' }
+        if (-not $manifest.Contains('origin = "https://github.com/Patras93/soulbound-soundpack/releases/latest/download/Soulbound-Soundpack.zip"')) { throw 'Bledny origin updatera.' }
         & gh auth status *> $null
         if ($LASTEXITCODE -ne 0) {
-            Write-Host 'Zaloguj sie na GitHub w terminalu / przegladarce.'
+            Write-Host 'Zaloguj sie do GitHub przez przegladarke.'
             & gh auth login --hostname github.com --git-protocol https --web
-            if ($LASTEXITCODE -ne 0) { throw 'Logowanie gh auth login nie powiodlo sie.' }
+            if ($LASTEXITCODE -ne 0) { throw 'Logowanie do GitHub nie powiodlo sie.' }
         }
         & gh auth setup-git
-        if ($LASTEXITCODE -ne 0) { throw 'Nie udalo sie skonfigurowac dostepu GitHub w Git.' }
-
-        Write-Host "Pobieram repozytorium: $repo"
+        if ($LASTEXITCODE -ne 0) { throw 'Blad konfiguracji GitHub CLI.' }
         & git clone --quiet $repoUrl $dest
-        if ($LASTEXITCODE -ne 0) { throw 'Blad git clone. Sprawdz polaczenie i uprawnienia do repozytorium.' }
-
-        if (Test-Path -LiteralPath (Join-Path $dest 'sounds')) {
-            Remove-Item -LiteralPath (Join-Path $dest 'sounds') -Recurse -Force
+        if ($LASTEXITCODE -ne 0) { throw 'Nie udalo sie sklonowac repozytorium.' }
+        # Nowe OGG i pliki projektu bez usuwania obcych plikow repozytorium.
+        Get-ChildItem -LiteralPath $root -File | Where-Object { $_.Name -in @('soundpack.lua','pack.toml','README.md','README_PL.txt','CHANGELOG_PL.txt','PUBLIKUJ_NA_GITHUB.cmd','PUBLIKUJ_NA_GITHUB.ps1') } | ForEach-Object {
+            Copy-Item -LiteralPath $_.FullName -Destination (Join-Path $dest $_.Name) -Force
         }
-        Copy-Item -LiteralPath (Join-Path $root 'sounds') -Destination (Join-Path $dest 'sounds') -Recurse -Force
-        if (Test-Path -LiteralPath (Join-Path $dest '.github')) {
-            Remove-Item -LiteralPath (Join-Path $dest '.github') -Recurse -Force
+        Get-ChildItem -LiteralPath (Join-Path $root 'sounds') -Recurse -File | ForEach-Object {
+            $relative = $_.FullName.Substring($root.Length + 1)
+            $target = Join-Path $dest $relative
+            $parent = Split-Path -Parent $target
+            if (-not (Test-Path -LiteralPath $parent)) { New-Item -ItemType Directory -Path $parent -Force | Out-Null }
+            Copy-Item -LiteralPath $_.FullName -Destination $target -Force
         }
-        Copy-Item -LiteralPath (Join-Path $root '.github') -Destination (Join-Path $dest '.github') -Recurse -Force
-        foreach ($f in @('pack.toml', 'soundpack.lua', 'README_PL.txt', 'CHANGELOG_PL.txt', 'README.md', 'PUBLIKUJ_NA_GITHUB.ps1', 'PUBLIKUJ_NA_GITHUB.cmd')) {
-            Copy-Item -LiteralPath (Join-Path $root $f) -Destination (Join-Path $dest $f) -Force
+        # Usuń wyłącznie przestarzały test v1.5.9; nowe testy v1.6.0 go zastępują.
+        $oldTest = Join-Path $dest '.github\tests\test_soundpack.lua'
+        if (Test-Path -LiteralPath $oldTest -PathType Leaf) { Remove-Item -LiteralPath $oldTest -Force }
+        Get-ChildItem -LiteralPath (Join-Path $root '.github') -Recurse -File | ForEach-Object {
+            $relative = $_.FullName.Substring($root.Length + 1)
+            $target = Join-Path $dest $relative
+            $parent = Split-Path -Parent $target
+            if (-not (Test-Path -LiteralPath $parent)) { New-Item -ItemType Directory -Path $parent -Force | Out-Null }
+            Copy-Item -LiteralPath $_.FullName -Destination $target -Force
         }
-
         & git -C $dest config user.name 'Patras93'
         & git -C $dest config user.email '93275458+Patras93@users.noreply.github.com'
-        & git -C $dest add --all
-        if ($LASTEXITCODE -ne 0) { throw 'Nie udalo sie dodac plikow do Git.' }
+        & git -C $dest add -A -- pack.toml soundpack.lua sounds README.md README_PL.txt CHANGELOG_PL.txt PUBLIKUJ_NA_GITHUB.cmd PUBLIKUJ_NA_GITHUB.ps1 .github
+        if ($LASTEXITCODE -ne 0) { throw 'Blad git add.' }
         & git -C $dest diff --cached --quiet
         if ($LASTEXITCODE -eq 1) {
-            & git -C $dest commit --quiet -m 'Soulbound Soundpack v1.5.8 - GitHub updater i 66 OGG'
+            & git -C $dest commit --quiet -m 'Soulbound Soundpack v1.6.0 - 82 OGG, wydarzenia, kroki, Soul Level'
             if ($LASTEXITCODE -ne 0) { throw 'Blad git commit.' }
             & git -C $dest push --quiet origin HEAD:main
-            if ($LASTEXITCODE -ne 0) { throw 'Blad git push. Pliki na GitHubie moga nie byc zaktualizowane.' }
-            Write-Host 'SUKCES: Kod i wszystkie OGG wyslane do GitHub.'
+            if ($LASTEXITCODE -ne 0) { throw 'Blad git push. Niczego nie publikuj recznie.' }
+            Write-Host 'SUKCES: v1.6.0 wyslane do GitHub. Release utworzy GitHub Actions.'
         } elseif ($LASTEXITCODE -eq 0) {
-            Write-Host 'Repozytorium juz ma te same pliki. Nie ma nic do wyslania.'
-        } else { throw 'Blad porownania zmian Git.' }
-
-        Write-Host 'Kod wypchniety. GitHub Actions automatycznie zbuduje ZIP i opublikuje wydanie.'
-        Write-Host "Sprawdz: https://github.com/$repo/actions"
-        Write-Host "Wydania: https://github.com/$repo/releases"
-    }
-    catch {
+            Write-Host 'Pliki sa juz identyczne z repozytorium; sprawdz istniejący Release.'
+        } else { throw 'Blad git diff.' }
+        Write-Host "Actions: https://github.com/$repo/actions"
+        Write-Host "Releases: https://github.com/$repo/releases"
+    } catch {
         Write-Host ('BLAD: ' + $_.Exception.Message)
-        Write-Host 'Nie usuwaj katalogu z rozpakowanym soundpackiem. Mozesz ponowic probe.'
-    }
-    finally {
-        if (Test-Path -LiteralPath $dest) {
-            Remove-Item -LiteralPath $dest -Recurse -Force -ErrorAction SilentlyContinue
-        }
+        Write-Host 'Zachowaj rozpakowana paczke. W razie problemu niczego nie usuwaj.'
+    } finally {
+        if (Test-Path -LiteralPath $dest) { Remove-Item -LiteralPath $dest -Recurse -Force -ErrorAction SilentlyContinue }
     }
 }

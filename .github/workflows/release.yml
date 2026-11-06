@@ -33,7 +33,11 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq lua5.4
-          lua5.4 .github/tests/test_soundpack.lua soundpack.lua
+          cd .github/tests
+          for test in test_announce.lua test_city.lua test_caves.lua test_soul_level.lua; do
+            echo "TEST: $test"
+            lua5.4 "$test" ../../soundpack.lua
+          done
       - name: Odczytaj wersje i zweryfikuj tag
         shell: bash
         run: |
