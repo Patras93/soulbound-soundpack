@@ -1,0 +1,28 @@
+name: Soulbound Soundpack release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pobierz pliki soundpacku
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+      - name: Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Przygotuj ZIP ze zrodlem aktualizacji
+        run: python .github/scripts/build_release.py
+      - name: Dodaj ZIP do wydania
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: gh release upload "$RELEASE_TAG" dist/Soulbound-Soundpack.zip --clobber
