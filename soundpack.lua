@@ -845,6 +845,12 @@ local function on_line(line)
   xp_event_active=false
   return
  end
+ -- Starsze skrocone potwierdzenie konca resetuje stan bez zagrania
+ -- nowego OGG: multiplierdown gra tylko na pelny komunikat serwera.
+ if s:match('^event x2 exp zakonczony') then
+  xp_event_active=false
+  return
+ end
  if s:match('^event x2 exp:%s*nastepny start') then
   xp_event_active=false
   return
