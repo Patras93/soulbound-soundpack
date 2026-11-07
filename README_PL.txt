@@ -1,59 +1,42 @@
-SOULBOUND SOUNDPACK v1.6.2 — INSTRUKCJA (PL)
+SOULBOUND SOUNDPACK v1.6.3 — INSTRUKCJA (PL)
 
-Projekt: https://github.com/Patras93/soulbound-soundpack
-Wydania: https://github.com/Patras93/soulbound-soundpack/releases
-GRA: Soulbound v107.00.0, Generic MUD v0.24.0+.
+REPO: https://github.com/Patras93/soulbound-soundpack
+GRA: Soulbound v108.00.0, Generic MUD v0.24.0+.
 
 INSTALACJA DLA GRACZY
-1. Ze strony GitHub Releases pobierz Soulbound-Soundpack.zip.
-2. Wypakuj folder z pack.toml, soundpack.lua i sounds.
+1. W GitHub Releases pobierz Soulbound-Soundpack.zip.
+2. Wypakuj folder z pack.toml, soundpack.lua i katalogiem sounds.
 3. W Generic MUD: Soundpacks > Set up a soundpack from a folder.
-4. Wlacz soundpack dla swiata Soulbound i polacz sie ponownie.
-5. Kolejna wersja: Soundpacks > Manage installed soundpacks >
-   Update from source, nastepnie ponowne polaczenie z gra.
+4. Włącz soundpack dla Soulbound i połącz się ponownie.
+5. Aktualizacje: Soundpacks > Manage installed soundpacks > Update from source.
 
-DODANE EFEKTY
-- announce.ogg — wydarzenie swiata / boss / event administracji.
-- steps/1..10.ogg — kroki po miescie.
-- steps/caves/1..4.ogg — chodzenie po jaskiniach, kryptach, podziemiach.
-- soul level.ogg — awans Soul Level Broni Duszy.
-- Dzwiek wydarzenia x2 EXP nie zostal zmieniony.
+NOWE DZWIEKI
+- events/double caps.ogg: START wydarzenia Over Cap EXP (zwiększony limit nagrody).
+- events/advent.ogg: faktyczne odebranie prezentu adwentowego.
+- Zachowano wszystkie wcześniejsze OGG, w tym zakończenie x2 EXP.
 
-KOMENDY KROKOW
-sbs steps on       — wlacz kroki miejskie
-sbs steps off      — wylacz kroki miejskie
-sbs steps status   — stan i licznik
-sbs steps test     — podglad kolejnego kroku
-sbs caves on       — wlacz kroki podziemne
-sbs caves off      — wylacz kroki podziemne
-sbs caves status   — stan i licznik
-sbs caves test     — podglad kolejnego kroku
-sbs test announce  — podglad dzwieku wydarzenia
-sbs test soullevel — podglad dzwieku awansu Duszy
-sbs music status  — stan muzyki mobow
-sbs musicvol 25   — glosnosc muzyki (0-100)
-sbs diag           — diagnostyka
-sbs updater        — instrukcja aktualizacji
+KOMENDY
+sbs test doublecaps   — test dźwięku rozpoczęcia Over Cap
+sbs test advent       — test dźwięku odebrania prezentu
+sbs test biohit       — Bio Blast: potwierdzone trafienie
+sbs test poisoned     — Bio Blast: potwierdzone nałożenie trucizny
+sbs test multiplierdown — potwierdzony koniec x2 EXP
+sbs test otherrecall  — recall innego gracza
+sbs steps on/off/status/test
+sbs caves on/off/status/test
+sbs music status
+sbs musicvol 25
+sbs diag
+sbs updater
 
-PUBLIKACJA NOWEGO WYDANIA PRZEZ GITHUB
-1. Rozpakuj ZRODLOWY ZIP do katalogu z pack.toml i PUBLIKUJ_NA_GITHUB.cmd.
-2. Uruchom PUBLIKUJ_NA_GITHUB.cmd. Musisz miec Git i GitHub CLI,
-   a konto GH musi miec uprawnienia do repozytorium Patras93.
-3. Skrypt wgra wszystkie OGG, kod i testy na galaz main.
-4. GitHub Actions wykona testy, utworzy Release v1.6.2 i doda
-   Soulbound-Soundpack.zip automatycznie. W serwisie sprawdz Actions.
-5. Nie tworz recznie tagu ani Release; nie wgrywaj pojedynczych OGG
-   przez przegladarke.
+AUTOMATYCZNA PUBLIKACJA NA GITHUB
+1. Rozpakuj ZIP ŹRÓDŁOWY (z .github i PUBLIKUJ_NA_GITHUB.cmd).
+2. Uruchom PUBLIKUJ_NA_GITHUB.cmd. Wymagane Git for Windows i GitHub CLI.
+3. Skrypt na Twoim komputerze kopiuje źródła do świeżego klonu i wykonuje
+   commit/push na main po potwierdzeniu zalogowania konta.
+4. GitHub Actions po zmianie pack.toml przeprowadzi testy, utworzy wydanie
+   v1.6.3 i dołączy Soulbound-Soundpack.zip. Sprawdzaj zakładkę Actions.
+5. Automatyczna publikacja na GitHub nie aktualizuje zainstalowanej gry
+   użytkowników bez użycia opcji Update from source.
 
-UWAGA: automatyczne PUBLIKOWANIE na GitHub po git push nie jest
-równoznaczne z automatycznym POBIERANIEM na komputerach graczy;
-Generic MUD ma opcje Update from source uruchamiana z menu.
-Przy publicznym udostepnianiu nagran nalezy miec prawa do redystrybucji.
-
-DZWIEKI v1.6.2
-- Bio Blast (trafienie): events/biohit.ogg
-- Bio Blast (rzeczywiste nalozenie trucizny): events/poisoned.ogg
-- Inna postac przybywa do Swiatyni po recallu: events/someone recalls.ogg
-- Oficjalny koniec x2 EXP: events/multiplierdown.ogg
-Do sprawdzenia: sbs test biohit, sbs test poisoned,
-sbs test otherrecall, sbs test multiplierdown.
+Przy publicznym udostępnianiu nagrań należy mieć prawa do redystrybucji.

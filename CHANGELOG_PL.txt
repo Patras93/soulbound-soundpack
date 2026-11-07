@@ -1,21 +1,32 @@
-SOULBOUND SOUNDPACK v1.6.2 — ZMIANY
+SOULBOUND SOUNDPACK v1.6.3 — ZMIANY (PL)
 
-- Bio Blast Magiteka: biohit.ogg na potwierdzone zadane obrazenia.
-- poisoned.ogg wyłącznie na komunikat skutecznego nałożenia trucizny przez Bio Blast.
-  Nie gra przy nieudanej próbie ani okresowych obrażeniach od trucizny.
-- Atak AoE odtwarza dźwięki maksymalnie raz na krótką serię trafień.
-- Przybycie innego gracza do Świątyni po recallu: dotychczasowy
-  someone recalls.ogg. Poprawiono dawny wyzwalacz, który reagował na zniknięcie.
-  Oczekujemy na znacznik PLAYER_LOGIN, aby nie odtwarzać dźwięku przy logowaniu.
-- multiplierdown.ogg odtwarza się tylko po oficjalnym zakończeniu x2 EXP,
-  raz na koniec eventu. Dźwięk początku double exp.ogg zachowany bez zmian.
-- Zachowano wszystkie istniejące pliki OGG, kroki, awans Duszy, nagrody
-  i dotychczasową kompatybilność Generic MUD v0.24.0, Soulbound v107.00.0.
-- Dodano testy dla Bio Blast, zatrucia, recalla i końca eventu x2 EXP.
-- Wydanie publikowane automatycznie po przejściu testów GitHub Actions.
+NOWE ZDARZENIA SOULBOUND v108.00.0
+- events/double caps.ogg: wyłącznie na oficjalne "EVENT OVER CAP START." z serwera.
+  Event zwiększa limit pojedynczej nagrody EXP, a NIE mnożnik samego EXP.
+  Nie reaguje na EXP postaci, Multi Cap, EXP Bank, status, zakończenie ani x2 EXP.
+  Jedno odtworzenie na rozpoczęcie, ponownie po oficjalnym końcu i następnym starcie.
+- events/advent.ogg: wyłącznie na "PREZENT ADWENTOWY odebrany! Dzień .../32.",
+  po faktycznym odebraniu prezentu, bez odtwarzania na listę, podgląd i odmowę.
+- Komendy odsłuchu: sbs test doublecaps oraz sbs test advent.
+
+ZGODNOŚĆ v1.6.2
+- Zachowano 85 poprzednich nagrań OGG i dodano 2 nowe: łącznie 87 OGG.
+- Zachowano Bio Blast (biohit.ogg), zatrucie (poisoned.ogg), recall innych
+  graczy (someone recalls.ogg), koniec x2 EXP (multiplierdown.ogg).
+- Zachowano odrębne dźwięki początku eventu x2 EXP i premii do banku EXP.
+- Naprawa błędu Lua: nie przypisujemy wartości do zmiennej sterującej pętli.
+- Pozostały kroki, muzyka walki, wszystkie dotychczasowe kanały i komendy.
+- Generic MUD v0.24.0+; odtwarzanie przez natywne API mud.play.
+
+TESTY I PUBLIKACJA
+- Naprawiono kontrolę wersji w skrypcie publikacji (wcześniej szukał 1.6.0 zamiast 1.6.3).
+- Testy Lua 5.4 w GitHub Actions: regresje v1.6.0 i zdarzenia v108 v1.6.3.
+- Test składni Lupa, kontrola 87 plików OGG, integralność ZIP.
+- GitHub Actions buduje i publikuje wydanie po zmianie pack.toml na main.
+- Publikacja wymaga uruchomienia PUBLIKUJ_NA_GITHUB.cmd i poprawnego git push.
 
 OGRANICZENIA
-- Dźwięk recalla innych graczy opiera się na odroczonym rozróżnianiu
-  przybycia i logowania (0,7 s). Wymaga testu na żywym serwerze.
-- Efekty Bio Blast dotyczą potwierdzonych komunikatów v107 i nie są
-  odtwarzane od wpisania komendy ani od zmian statystyk.
+- Testy symulują prawdziwe komunikaty serwera v108 i nie zastępują odsłuchu
+  w Generic MUD na serwerze Windows.
+- Dźwięk recalla nadal wykorzystuje opóźnione rozpoznanie PLAYER_LOGIN 0,7 s.
+- Nie zmieniono serwera Soulbound ani jego danych.

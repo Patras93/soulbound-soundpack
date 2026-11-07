@@ -34,8 +34,8 @@ if not (ROOT / 'soundpack.lua').is_file():
     raise SystemExit('ERROR: Missing soundpack.lua')
 
 sounds = sorted((ROOT / 'sounds').rglob('*.ogg'))
-if len(sounds) < 85:
-    raise SystemExit(f'ERROR: Brakuje OGG: {len(sounds)}/85')
+if len(sounds) < 87:
+    raise SystemExit(f'ERROR: Brakuje OGG: {len(sounds)}/87')
 for sound in sounds:
     if sound.read_bytes()[:4] != b'OggS':
         raise SystemExit(f'ERROR: Niepoprawny naglowek OGG: {sound}')
