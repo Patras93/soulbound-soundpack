@@ -1,32 +1,22 @@
-SOULBOUND SOUNDPACK v1.6.3 — ZMIANY (PL)
+SOULBOUND SOUNDPACK v1.6.4 — ZMIANY (PL)
 
-NOWE ZDARZENIA SOULBOUND v108.00.0
-- events/double caps.ogg: wyłącznie na oficjalne "EVENT OVER CAP START." z serwera.
-  Event zwiększa limit pojedynczej nagrody EXP, a NIE mnożnik samego EXP.
-  Nie reaguje na EXP postaci, Multi Cap, EXP Bank, status, zakończenie ani x2 EXP.
-  Jedno odtworzenie na rozpoczęcie, ponownie po oficjalnym końcu i następnym starcie.
-- events/advent.ogg: wyłącznie na "PREZENT ADWENTOWY odebrany! Dzień .../32.",
-  po faktycznym odebraniu prezentu, bez odtwarzania na listę, podgląd i odmowę.
-- Komendy odsłuchu: sbs test doublecaps oraz sbs test advent.
+NAPRAWA PREZENTÓW SOULBOUND v109.00.0
+- events/daygift.ogg: potwierdzona automatyczna nagroda dzienna z komunikatu
+  "DZIENNY PREZENT: automatyczna nagroda: ... EXP postaci +N."
+- events/advent.ogg: potwierdzona nagroda grudniowa z komunikatu
+  "ADWENT: automatyczna nagroda: ... EXP postaci +N."
+- Nagroda pojawia się po 120 sekundach sesji, nie przy samym logowaniu.
+- Dźwięki nie reagują na status, listę, zapowiedź ani odmowę.
+- Zachowana obsługa ręcznego prezentu adwentowego v108 i starszego Daily Login.
 
-ZGODNOŚĆ v1.6.2
-- Zachowano 85 poprzednich nagrań OGG i dodano 2 nowe: łącznie 87 OGG.
-- Zachowano Bio Blast (biohit.ogg), zatrucie (poisoned.ogg), recall innych
-  graczy (someone recalls.ogg), koniec x2 EXP (multiplierdown.ogg).
-- Zachowano odrębne dźwięki początku eventu x2 EXP i premii do banku EXP.
-- Naprawa błędu Lua: nie przypisujemy wartości do zmiennej sterującej pętli.
-- Pozostały kroki, muzyka walki, wszystkie dotychczasowe kanały i komendy.
-- Generic MUD v0.24.0+; odtwarzanie przez natywne API mud.play.
+ZGODNOŚĆ I TESTY
+- Zachowano wszystkie 87 OGG; bez zmian Over Cap, x2 EXP, Bio Blast,
+  zatrucia, recalla, kroków, muzyki walki i awansu Soul Level.
+- Wzorce dopasowano do systems/gifts_v109/delivery.py z kodu Soulbound v109.
+- Dodano test .github/tests/test_v164.lua i utrzymano wcześniejsze testy.
+- Wydanie na GitHubie: automatyczne testy i publikacja Release po zmianie
+  pack.toml na main, bez ręcznego uruchamiania CMD.
 
-TESTY I PUBLIKACJA
-- Naprawiono kontrolę wersji w skrypcie publikacji (wcześniej szukał 1.6.0 zamiast 1.6.3).
-- Testy Lua 5.4 w GitHub Actions: regresje v1.6.0 i zdarzenia v108 v1.6.3.
-- Test składni Lupa, kontrola 87 plików OGG, integralność ZIP.
-- GitHub Actions buduje i publikuje wydanie po zmianie pack.toml na main.
-- Publikacja wymaga uruchomienia PUBLIKUJ_NA_GITHUB.cmd i poprawnego git push.
-
-OGRANICZENIA
-- Testy symulują prawdziwe komunikaty serwera v108 i nie zastępują odsłuchu
-  w Generic MUD na serwerze Windows.
-- Dźwięk recalla nadal wykorzystuje opóźnione rozpoznanie PLAYER_LOGIN 0,7 s.
-- Nie zmieniono serwera Soulbound ani jego danych.
+OGRANICZENIE
+- Testy używają prawdziwych formatów komunikatów v109, jednak odsłuch
+  na żywym serwerze i w Generic MUD wymaga potwierdzenia.
