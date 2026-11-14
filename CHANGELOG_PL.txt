@@ -1,22 +1,32 @@
-SOULBOUND SOUNDPACK v1.6.4 — ZMIANY (PL)
+SOULBOUND SOUNDPACK v1.6.5 — ZMIANY (PL)
 
-NAPRAWA PREZENTÓW SOULBOUND v109.00.0
-- events/daygift.ogg: potwierdzona automatyczna nagroda dzienna z komunikatu
-  "DZIENNY PREZENT: automatyczna nagroda: ... EXP postaci +N."
-- events/advent.ogg: potwierdzona nagroda grudniowa z komunikatu
-  "ADWENT: automatyczna nagroda: ... EXP postaci +N."
-- Nagroda pojawia się po 120 sekundach sesji, nie przy samym logowaniu.
-- Dźwięki nie reagują na status, listę, zapowiedź ani odmowę.
-- Zachowana obsługa ręcznego prezentu adwentowego v108 i starszego Daily Login.
+NAPRAWA JAMMER — SOULBOUND MUD v113.00.17
+- events/noactoff.ogg: dźwięk końca Jammera odtwarza się teraz
+  na potwierdzony komunikat:
+  "Jammer na Upiór Velsal zakończył działanie."
+- Dopasowanie jest niezależne od nazwy przeciwnika (również gdy
+  komunikat widzi członek drużyny, który nie aktywował Jammera).
+- Bez dźwięku na akcje Stop z pozostałym czasem, samo rzucenie
+  Jammera, komunikaty informacyjne, podobne teksty i wylogowanie.
+- Zachowano stare komunikaty zakończenia Stop dla wcześniejszych
+  wersji Soulbound; nie zmieniono istniejącego pliku noactoff.ogg.
+- Wersja gry v113.00.17 wysyła nowe zakończenie jako ważny
+  komunikat walki do walczącego i pobliskich członków drużyny.
 
-ZGODNOŚĆ I TESTY
-- Zachowano wszystkie 87 OGG; bez zmian Over Cap, x2 EXP, Bio Blast,
-  zatrucia, recalla, kroków, muzyki walki i awansu Soul Level.
-- Wzorce dopasowano do systems/gifts_v109/delivery.py z kodu Soulbound v109.
-- Dodano test .github/tests/test_v164.lua i utrzymano wcześniejsze testy.
-- Wydanie na GitHubie: automatyczne testy i publikacja Release po zmianie
-  pack.toml na main, bez ręcznego uruchamiania CMD.
+KOMPATYBILNOŚĆ
+- Wszystkie wcześniejsze 87 OGG zachowane bez zmian.
+- Bez zmian: Over Cap EXP, dzienne prezenty, Advent Gifts, Bio Blast,
+  zatrucie, recall, x2 EXP, kroki, Soul Level, muzyka walki.
+- Generic MUD v0.24.0+; Soulbound v107–v113 (w tym v113.00.17).
+- Nie zmieniono kodu ani bazy gry Soulbound.
 
-OGRANICZENIE
-- Testy używają prawdziwych formatów komunikatów v109, jednak odsłuch
-  na żywym serwerze i w Generic MUD wymaga potwierdzenia.
+TESTY I WYDANIE
+- Nowy zestaw .github/tests/test_v165.lua dla rzeczywistego tekstu v113.00.17
+  i zabezpieczenia przed fałszywym odtwarzaniem.
+- Zachowane wcześniejsze testy Lua i kontrola Lupa, a także sprawdzanie OGG.
+- Wydanie ZIP powstaje automatycznie przez GitHub Actions po zmianie
+  pack.toml na main; bez uruchamiania skryptów CMD/BAT.
+
+UWAGA
+- Testy odtwarzają komunikaty serwera w symulacji. Odsłuch na żywym
+  serwerze i w Generic MUD wymaga potwierdzenia w rozgrywce.
