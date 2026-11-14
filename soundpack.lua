@@ -1,4 +1,4 @@
--- SOULBOUND SOUNDPACK v1.6.4 - Native Generic MUD (mud.play)
+-- SOULBOUND SOUNDPACK v1.6.5 - Native Generic MUD (mud.play)
 -- Komunikaty ruchu i strefy: zweryfikowane w Soulbound v107.00.0. SOUND_EVENT pozostaje kompatybilny.
 -- Regula bezpieczenstwa: brak dzwieku jest lepszy niz falszywy dzwiek.
 local active, volume = true, 0.7
@@ -1010,6 +1010,15 @@ if s:match('^fame zaliczone') then sound('fame',1);return end
  if has(s,'opuszcza druzyne') or has(s,'opuszczasz druzyne') then sound('leaveparty',1);return end
  if s:match('^heal beam: .+ odzyskuje %d+ hp') or s:match('^heal beam .+ lacznie %d+ hp') or s:match('^.+ uzywa heal beam%. odzyskujesz %d+ hp') then sound('healbeam',1);return end
  if s:match('^jammer: .+ zostaje jednorazowo wylaczony') then jammer_active=true;sound('jammer',1);return end
+ -- Soulbound v113.00.17: serwer zamienia koncowe "Stop sie konczy."
+ -- w jedno wyrazne potwierdzenie, widoczne rowniez dla gracza solo
+ -- i pobliskich czlonkow druzyny. Nie wymagaj jammer_active:
+ -- czlonek druzyny moze nie widziec poczatkowego castu.
+ if in_world and s:match('^jammer na .+ zakonczyl dzialanie%.$') then
+  jammer_active=false
+  sound('jammeroff',1)
+  return
+ end
  if s:match('^jammer: .+ przestaje') or s:match('^stop .+ wygasa') or has(s,'stop sie konczy.') then jammer_active=false;sound('jammeroff',1);return end
  if has(s,'v-max') then
   if has(s,'wygasa') or has(s,'dezaktywujesz') then sound('vmaxoff',1);return end
@@ -1072,11 +1081,11 @@ mud.alias('sbs *',function(line,captures)
  arg=norm(arg)
  if arg=='on' then active=true;say('ON')
  elseif arg=='off' then active=false;end_combat('soundpack off');reset_quest_gold();cancel_pending_xp();temple_reset();bioblast_reset();over_cap_event_active=false;say('OFF')
- elseif arg=='status' then say('v1.6.4 '..(active and 'ON' or 'OFF')..'; efekty '..math.floor(volume*100)..'%; muzyka '..(music_enabled and 'ON' or 'OFF')..' '..math.floor(music_mix*100)..'%; kroki_miasto '..(city_steps_enabled and 'ON' or 'OFF')..'; kroki_podziemia '..(cave_steps_enabled and 'ON' or 'OFF')..'; cap '..tostring(cap or 'nieznany')..'; odebrane linie '..counters.lines..'; dzwieki '..counters.played)
- elseif arg=='diag' then say('DIAG v1.6.4: w_swiecie='..tostring(in_world)..'; linie='..counters.lines..'; rozpoznania='..counters.events..'; odtworzenia='..counters.played..'; bledy='..counters.errors..'; mud.play='..(mud and mud.play and 'dostepny' or 'BRAK')..' (typ '..type(mud.play)..')'..'; ostatnie zdarzenie='..last_event..'; ostatnia linia='..last_line..'; ostatni blad='..last_error..'; walki='..tostring(in_combat)..'; powalony='..tostring(player_downed)..'; stop muzyki='..stopped_music..'; zmiany utworu='..music_changes..'; muzyka='..(music_enabled and 'ON' or 'OFF')..' '..math.floor(music_mix*100)..'%; przyczyna='..last_stop_reason..'; slash=przekazywany bezposrednio; recall_odp='..recall_confirms..'; x2_start='..xp_event_starts..'; x2_koniec='..xp_event_endings..'; overcap_start='..over_cap_event_starts..'; prezenty='..advent_gifts_received..'; recall_innych='..temple_recall_count..'; x2_aktywny='..tostring(xp_event_active)..'; sound_event='..tostring(sound_protocol_count)..'; nowy_protokol='..tostring(sound_protocol)..'; ostatni_marker='..last_sound_marker)
+ elseif arg=='status' then say('v1.6.5 '..(active and 'ON' or 'OFF')..'; efekty '..math.floor(volume*100)..'%; muzyka '..(music_enabled and 'ON' or 'OFF')..' '..math.floor(music_mix*100)..'%; kroki_miasto '..(city_steps_enabled and 'ON' or 'OFF')..'; kroki_podziemia '..(cave_steps_enabled and 'ON' or 'OFF')..'; cap '..tostring(cap or 'nieznany')..'; odebrane linie '..counters.lines..'; dzwieki '..counters.played)
+ elseif arg=='diag' then say('DIAG v1.6.5: w_swiecie='..tostring(in_world)..'; linie='..counters.lines..'; rozpoznania='..counters.events..'; odtworzenia='..counters.played..'; bledy='..counters.errors..'; mud.play='..(mud and mud.play and 'dostepny' or 'BRAK')..' (typ '..type(mud.play)..')'..'; ostatnie zdarzenie='..last_event..'; ostatnia linia='..last_line..'; ostatni blad='..last_error..'; walki='..tostring(in_combat)..'; powalony='..tostring(player_downed)..'; stop muzyki='..stopped_music..'; zmiany utworu='..music_changes..'; muzyka='..(music_enabled and 'ON' or 'OFF')..' '..math.floor(music_mix*100)..'%; przyczyna='..last_stop_reason..'; slash=przekazywany bezposrednio; recall_odp='..recall_confirms..'; x2_start='..xp_event_starts..'; x2_koniec='..xp_event_endings..'; overcap_start='..over_cap_event_starts..'; prezenty='..advent_gifts_received..'; recall_innych='..temple_recall_count..'; x2_aktywny='..tostring(xp_event_active)..'; sound_event='..tostring(sound_protocol_count)..'; nowy_protokol='..tostring(sound_protocol)..'; ostatni_marker='..last_sound_marker)
  elseif arg=='watch on' then debug_mode=true;say('Podglad linii WLACZONY; sbs watch off wylacza')
  elseif arg=='watch off' then debug_mode=false;say('Podglad linii WYLACZONY')
- elseif arg=='coverage' then say('Soulbound v107-v109: SOUND_EVENT EXP_BANK/HALF_CAP/FULL_CAP/MOB_HP/PLAYER_LOGIN/PLAYER_LOGOUT/TELL_RECEIVED/REPLY_RECEIVED obslugiwane. Pozostale zdarzenia na podstawie potwierdzonego tekstu. OGG nie dodaja nowych zdarzen po stronie serwera.')
+ elseif arg=='coverage' then say('Soulbound v107-v113: SOUND_EVENT EXP_BANK/HALF_CAP/FULL_CAP/MOB_HP/PLAYER_LOGIN/PLAYER_LOGOUT/TELL_RECEIVED/REPLY_RECEIVED obslugiwane. Pozostale zdarzenia na podstawie potwierdzonego tekstu. OGG nie dodaja nowych zdarzen po stronie serwera.')
  elseif arg=='caves off' then cave_steps_enabled=false;city_walk_reset();say('Kroki podziemne OFF')
  elseif arg=='caves on' then cave_steps_enabled=true;city_walk_reset();say('Kroki podziemne ON')
  elseif arg=='caves status' then say('Kroki jaskinie/krypty '..(cave_steps_enabled and 'ON' or 'OFF')..'; odegrane '..cave_step_total..'; nastepny plik '..((cave_step_index%4)+1)..'.ogg')
@@ -1132,7 +1141,7 @@ mud.alias('sbs *',function(line,captures)
   elseif fx[kind] then sound(kind,0,'sb_test_'..kind,true)
   else say('Brak przypisania do '..kind) end
  elseif arg=='updater' then say('Aktualizacja: Generic MUD > Soundpacks > Manage installed soundpacks > Update from source. Wymaga pakietu z oficjalnego GitHub Release; po aktualizacji polacz ponownie.')
- elseif arg=='help' then say('sbs on/off/status/updater/diag/coverage/steps on/off/status/test/caves on/off/status/test/music on/off/status/musicvol 0-100/musicstop/testmob POZIOM/testplayer POZIOM/teststop/probe/watch on/off/vol 0-100/test daygift/advent/doublecaps/biohit/poisoned/multiplierdown/otherrecall')
+ elseif arg=='help' then say('sbs on/off/status/updater/diag/coverage/steps on/off/status/test/caves on/off/status/test/music on/off/status/musicvol 0-100/musicstop/testmob POZIOM/testplayer POZIOM/teststop/probe/watch on/off/vol 0-100/test daygift/advent/doublecaps/biohit/poisoned/multiplierdown/otherrecall/jammeroff')
  else say('Wpisz sbs help') end
 end)
 -- Osobny cichy kanal: znaczniki SOUND_EVENT sa techniczne i nie maja
@@ -1144,4 +1153,4 @@ mud.trigger([[^SOUND_EVENT[ ]+]],function(line,captures) on_line(line) end,{rege
 -- Znaczniki SOUND_EVENT sa obslugiwane tylko przez pierwszy wyzwalacz.
 -- W przeciwnym razie player_login / tell_received mogly uruchomic efekt dwa razy.
 mud.trigger([[^(?!SOUND_EVENT[ ]+).+]],function(line,captures) on_line(line) end,{regex=true})
-say('Zaladowano v1.6.4 dla Soulbound v107-v109 - Generic MUD, Twoje OGG.')
+say('Zaladowano v1.6.5 dla Soulbound v107-v113 - Generic MUD, Twoje OGG.')
