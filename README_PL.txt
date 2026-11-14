@@ -1,41 +1,36 @@
-SOULBOUND SOUNDPACK v1.6.4 — INSTRUKCJA (PL)
+SOULBOUND SOUNDPACK v1.6.5 — INSTRUKCJA (PL)
 
-REPO: https://github.com/Patras93/soulbound-soundpack
-GRA: Soulbound v107-v109, Generic MUD v0.24.0+.
+Projekt: https://github.com/Patras93/soulbound-soundpack
+Wydania: https://github.com/Patras93/soulbound-soundpack/releases
+GRA: Soulbound v107–v113.00.17, Generic MUD v0.24.0+.
+Zachowano 87 plików dźwiękowych OGG.
 
-INSTALACJA I AKTUALIZACJA
-1. W Generic MUD otwórz Soundpacks > Manage installed soundpacks.
-2. Wybierz Update from source dla Soulbound Soundpack.
-3. Po aktualizacji połącz się ponownie z grą.
-Nowa instalacja: pobierz Soulbound-Soundpack.zip z GitHub Releases,
-wypakuj i wybierz Soundpacks > Set up a soundpack from a folder.
+AKTUALIZACJA W GENERIC MUD
+1. Otwórz Soundpacks > Manage installed soundpacks.
+2. Wybierz Soulbound Soundpack i Update from source.
+3. Po zainstalowaniu nowego wydania połącz się ponownie z grą.
 
-DŹWIĘKI PREZENTÓW
-- W Soulbound v109 po 120 sekundach online codzienny automatyczny prezent
-  odtwarza events/daygift.ogg, ale tylko po faktycznym przyznaniu nagrody.
-- W grudniu automatyczny prezent ADWENT odtwarza events/advent.ogg.
-- Zachowano ręczny prezent adwentowy v108 i jego events/advent.ogg.
-- Status, zapowiedź, odmowa i sam login są ciche.
-- Jeden prezent dziennie na główne konto kontroluje serwer gry.
+JAMMER
+- Gdy Jammer przestaje działać na przeciwniku, dźwięk
+  events/noactoff.ogg odtwarza się po komunikacie
+  "Jammer na NAZWA zakończył działanie."
+- Nie uruchamia się, kiedy Jammer jeszcze trwa ani po samym
+  użyciu umiejętności. Start Jammera ma własny events/stop.ogg.
+- Zgodność ze starszymi komunikatami Jammer/Stop jest zachowana.
+- Odsłuch testowy: sbs test jammeroff.
+- Sprawdzenie stanu: sbs diag.
 
 POZOSTAŁE EFEKTY
-- events/double caps.ogg: START wydarzenia Over Cap EXP.
-- Bio Blast: events/biohit.ogg oraz events/poisoned.ogg.
-- Zachowano recall, x2 EXP, kroki, Soul Level i wszystkie 87 nagrań OGG.
+- daygift.ogg: codzienny prezent automatyczny v109 i nowszych.
+- advent.ogg: prezent adwentowy.
+- double caps.ogg: START wydarzenia Over Cap EXP.
+- Bio Blast, zatrucie, recall, x2 EXP, kroki, Soul Level, muzyka walki.
+- Odsłuch: sbs test daygift / advent / doublecaps / biohit / poisoned /
+  multiplierdown / otherrecall / jammeroff.
 
-KOMENDY
-sbs test daygift / advent / doublecaps / biohit / poisoned / multiplierdown / otherrecall
-sbs steps on/off/status/test
-sbs caves on/off/status/test
-sbs music status
-sbs musicvol 25
-sbs diag
-sbs updater
+PUBLIKACJA
+Po przesłaniu zmian kodu i pack.toml do repozytorium GitHub Actions
+automatycznie wykonuje testy i publikuje ZIP jako nowe wydanie.
+Nie trzeba uruchamiać skryptów CMD, BAT ani ręcznie tworzyć Release.
 
-PUBLIKACJA AUTOMATYCZNA
-Po aktualizacji kodu i pack.toml w repozytorium GitHub Actions
-uruchamia testy i publikuje Soulbound-Soundpack.zip jako Release.
-Gracz nie uruchamia skryptów CMD ani nie publikuje Release ręcznie.
-Aktualizacja na komputerze: Update from source w Generic MUD.
-
-Nagrania udostępniaj wyłącznie z prawem do redystrybucji.
+Przy publicznym udostępnianiu nagrań należy mieć prawa do redystrybucji.
