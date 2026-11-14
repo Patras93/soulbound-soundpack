@@ -1,13 +1,13 @@
-# Soulbound Soundpack v1.6.4
+# Soulbound Soundpack v1.6.5
 
-Natywny soundpack Lua dla Generic MUD v0.24.0+, zgodny z Soulbound v107-v109. Zachowano wszystkie **87 OGG**.
+Natywny soundpack Lua dla Generic MUD v0.24.0+, zgodny z Soulbound v107–v113.00.17. **87 OGG bez zmian**.
 
-Soulbound v109 po 120 sekundach w grze automatycznie przyznaje prezent dzienny. Potwierdzenie "DZIENNY PREZENT: automatyczna nagroda" uruchamia events/daygift.ogg, a grudniowy "ADWENT: automatyczna nagroda" — events/advent.ogg. Przy logowaniu i sprawdzaniu statusu nie słychać żadnego dźwięku prezentu.
+**Poprawka Jammera v113.00.17:** oficjalny komunikat „Jammer na NAZWA zakończył działanie.” uruchamia istniejący dźwięk events/noactoff.ogg. Komunikaty o pozostałych akcjach Stop pozostają ciche. Dźwięki dla początku Jammera, Over Cap EXP, prezentów, Bio Blast i pozostałych zdarzeń są zachowane.
 
-**Aktualizacja:** Generic MUD > Soundpacks > Manage installed soundpacks > Update from source, następnie połącz się ponownie.
+**Aktualizacja:** Generic MUD → Soundpacks → Manage installed soundpacks → Update from source, a następnie ponowne połączenie.
 
-**Publikacja:** GitHub Actions sam przeprowadza testy i publikuje nowy ZIP po zmianie pack.toml. Nie wymaga uruchamiania skryptów CMD.
+**Publikacja:** GitHub Actions testuje i publikuje ZIP automatycznie po zmianie pack.toml na main, bez CMD lub BAT.
 
-[Releases](https://github.com/Patras93/soulbound-soundpack/releases/latest) | README_PL.txt | CHANGELOG_PL.txt
+[Releases](https://github.com/Patras93/soulbound-soundpack/releases/latest) · README_PL.txt · CHANGELOG_PL.txt
 
-Nagrania udostępniaj tylko wtedy, gdy masz prawo do ich rozpowszechniania.
+Nagrania wolno rozpowszechniać wyłącznie z odpowiednimi prawami.
