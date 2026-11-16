@@ -1,36 +1,35 @@
-SOULBOUND SOUNDPACK v1.6.5 — INSTRUKCJA (PL)
+SOULBOUND SOUNDPACK v1.6.6 — INSTRUKCJA (PL)
 
 Projekt: https://github.com/Patras93/soulbound-soundpack
 Wydania: https://github.com/Patras93/soulbound-soundpack/releases
-GRA: Soulbound v107–v113.00.17, Generic MUD v0.24.0+.
-Zachowano 87 plików dźwiękowych OGG.
+GRA: Soulbound v113.00.24 (zgodność zachowana z wcześniejszymi),
+Generic MUD v0.24.0+.
+Liczba nagrań: 87 OGG.
+
+NOWOŚĆ: AWANS SKILLA
+- Kiedy skill awansuje na kolejny Skill Level, gra ten sam learned.ogg,
+  który już słyszysz po nauczeniu nowej umiejętności.
+- Przykład komunikatu gry:
+  "Bio Blast awansuje na Skill Level 25."
+- Dźwięk NIE gra za zwykłe Skill XP, używanie skilla ani sprawdzanie poziomu.
+- Odsłuch samego dźwięku: sbs test learned.
+
+ZACHOWANE DŹWIĘKI
+- events/noactoff.ogg — koniec Jammera.
+- events/stop.ogg — początek Jammera.
+- events/daygift.ogg — dzienny prezent.
+- events/advent.ogg — prezent adwentowy.
+- events/double caps.ogg — start wydarzenia Over Cap EXP.
+- Bio Blast, zatrucie, recall, x2 EXP, kroki, Soul Level, muzyka walki.
 
 AKTUALIZACJA W GENERIC MUD
 1. Otwórz Soundpacks > Manage installed soundpacks.
 2. Wybierz Soulbound Soundpack i Update from source.
-3. Po zainstalowaniu nowego wydania połącz się ponownie z grą.
+3. Po aktualizacji połącz się ponownie z grą.
+Możesz sprawdzić wersję przez sbs status i błędy przez sbs diag.
 
-JAMMER
-- Gdy Jammer przestaje działać na przeciwniku, dźwięk
-  events/noactoff.ogg odtwarza się po komunikacie
-  "Jammer na NAZWA zakończył działanie."
-- Nie uruchamia się, kiedy Jammer jeszcze trwa ani po samym
-  użyciu umiejętności. Start Jammera ma własny events/stop.ogg.
-- Zgodność ze starszymi komunikatami Jammer/Stop jest zachowana.
-- Odsłuch testowy: sbs test jammeroff.
-- Sprawdzenie stanu: sbs diag.
+PUBLIKACJA NA GITHUB
+GitHub Actions automatycznie uruchamia testy i udostępnia ZIP po zmianie
+pack.toml na main. Nie trzeba uruchamiać skryptów CMD ani BAT.
 
-POZOSTAŁE EFEKTY
-- daygift.ogg: codzienny prezent automatyczny v109 i nowszych.
-- advent.ogg: prezent adwentowy.
-- double caps.ogg: START wydarzenia Over Cap EXP.
-- Bio Blast, zatrucie, recall, x2 EXP, kroki, Soul Level, muzyka walki.
-- Odsłuch: sbs test daygift / advent / doublecaps / biohit / poisoned /
-  multiplierdown / otherrecall / jammeroff.
-
-PUBLIKACJA
-Po przesłaniu zmian kodu i pack.toml do repozytorium GitHub Actions
-automatycznie wykonuje testy i publikuje ZIP jako nowe wydanie.
-Nie trzeba uruchamiać skryptów CMD, BAT ani ręcznie tworzyć Release.
-
-Przy publicznym udostępnianiu nagrań należy mieć prawa do redystrybucji.
+Udostępniaj nagrania tylko z prawem do ich redystrybucji.
