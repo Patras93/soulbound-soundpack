@@ -55,7 +55,7 @@ check(count('sb_jammeroff')==baseline,'no Jammer-end sound after character logou
 command('test jammeroff')
 check(last('sb_test_jammeroff')=='sounds/events/noactoff.ogg','manual preview uses existing OGG')
 command('status')
-check(spoken[#spoken]:find('v1.6.6',1,true)~=nil,'status shows v1.6.6')
+check(spoken[#spoken]:find('v1.6.7',1,true)~=nil,'status shows v1.6.7')
 command('diag')
 check(spoken[#spoken]:find('bledy=0',1,true)~=nil,'no Lua runtime errors')
 print('V165 TOTAL PASS '..n)
