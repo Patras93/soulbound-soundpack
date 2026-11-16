@@ -53,6 +53,7 @@ local temple_recall_count=0
 local recall_confirms=0
 -- v12.00.8: zdarzenia przekazywane przez serwer (odzielne od tekstu do NVDA).
 local sound_protocol=false
+local reward_protocol_v11329=false -- markery EXP 113.00.29+
 local sound_protocol_count=0
 local sound_kinds={}
 local mob_hp_by_id={}
@@ -575,28 +576,35 @@ local function on_sound_event(s)
  local fields={}
  for k,v in s:gmatch('([%w_]+)=([^%s]+)') do fields[k]=v end
  if event=='exp_bank' then
+  -- Od v113.00.29 wpłata do banku NIE jest OVER_CAP_REWARD.
   local n=tonumber(fields.amount or '') or 0
-  if n>0 then recent_sound_reward_at=counters.lines;queue_xp_sound('overcap','sb_bank') end
-  return true
- elseif event=='half_cap' or event=='full_cap' then
-  local n=tonumber(fields.cap or '') or 0
-  if n>0 then
-   local key=tostring(n)
-   if sound_kinds.last_cap~=key then
-    sound_kinds.last_cap=key
-    sound_kinds.half=false
-    sound_kinds.full=false
-   end
+  if in_world and not reward_protocol_v11329 and n>0 then
    recent_sound_reward_at=counters.lines
-   if event=='full_cap' and not sound_kinds.full then
-    sound_kinds.full=true
-    sound_kinds.half=true
-    queue_xp_sound('cap','sb_cap')
-   elseif event=='half_cap' and not sound_kinds.half and not sound_kinds.full then
-    sound_kinds.half=true
-    queue_xp_sound('halfcap','sb_halfcap')
+   queue_xp_sound('overcap','sb_bank')
+  end
+  return true
+ elseif event=='half_cap' or event=='full_cap' or event=='over_cap_reward' then
+  local maximum=tonumber(fields.cap or '') or 0
+  if in_world and maximum>0 then
+   -- Kazdy marker jest potwierdzona, niezalezna wyplata EXP.
+   -- Bez sesyjnej blokady i bez opoznienia anulowanego przez quest.
+   recent_sound_reward_at=counters.lines
+   if event=='half_cap' then
+    sound('halfcap',0,'sb_halfcap')
+   elseif event=='full_cap' then
+    sound('cap',0,'sb_cap')
+   else
+    sound('overcap',0,'sb_overcap_reward')
    end
   end
+  return true
+ elseif event=='over_cap_start' then
+  -- Serwer wysyla raz na okno godzinne: to NIE nagroda > CAP.
+  if in_world then
+   over_cap_event_starts=over_cap_event_starts+1
+   sound('doublecaps',0,'sb_overcap_event_start')
+  end
+  over_cap_event_active=true
   return true
  elseif event=='player_login' then
   local name=norm(fields.name or '')
@@ -680,7 +688,10 @@ local function on_line(line)
    in_world=false
   end
   sound_protocol = s:match('soulbound v12%.00%.8')~=nil or s:match('soulbound v1[3-9]%.')~=nil
-  sound_kinds={};mob_hp_by_id={};focused_mob=nil;mob_sound_bucket=nil
+  local major,minor,patch=s:match('soulbound v(%d+)%.(%d+)%.(%d+)')
+   major,minor,patch=tonumber(major) or 0,tonumber(minor) or 0,tonumber(patch) or 0
+   reward_protocol_v11329=(major>113 or (major==113 and (minor>0 or (minor==0 and patch>=29))))
+   mob_hp_by_id={};focused_mob=nil;mob_sound_bucket=nil
   temple_reset();bioblast_reset();over_cap_event_active=false
   city_walk_reset()
    cancel_pending_xp();quest_reward_in_progress=false;quest_money_until=-100000;quest_money_played=false;reset_quest_gold()
