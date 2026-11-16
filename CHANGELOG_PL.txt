@@ -1,32 +1,44 @@
-SOULBOUND SOUNDPACK v1.6.6 — ZMIANY (PL)
+SOULBOUND SOUNDPACK v1.6.7 — ZMIANY (PL)
 
-DŹWIĘK AWANSU UMIEJĘTNOŚCI — SOULBOUND v113.00.24
-- Gdy wcześniej poznana umiejętność awansuje na następny poziom,
-  odtwarzany jest TEN SAM events/learned.ogg, co podczas nauczenia się skilla.
-- Wzorzec oparty na rzeczywistym komunikacie gry:
-  "<nazwa umiejętności> awansuje na Skill Level <poziom>."
-- Działa dla nazw umiejętności zawierających spacje, niezależnie od
-  liczby osiągniętego poziomu (od 2 wzwyż).
-- Dźwięk nie odtwarza się za zwykłe Skill XP, samo użycie, podgląd
-  stanu, informację o osiągnięciu maksimum ani teksty wiadomości [NEWS].
-- Poprzedni dźwięk nauczenia nowego skilla pozostaje bez zmian.
-- Nie dodano nowych nagrań: wciąż 87 OGG, bez przerabiania dźwięku.
+POPRAWKA CAP / HALF CAP / OVER CAP W SOULBOUND v113.00.29
+Nowy system przyznawania EXP nadaje autorytatywne SOUND_EVENT po
+rzeczywistej wypłacie nagrody, a nie po odczytaniu stanu banku.
+
+- SOUND_EVENT HALF_CAP cap=N kind=...: sounds/events/halfcap.ogg.
+- SOUND_EVENT FULL_CAP cap=N kind=...: sounds/events/cap.ogg.
+- SOUND_EVENT OVER_CAP_REWARD cap=N kind=...: sounds/events/overcap.ogg.
+- SOUND_EVENT OVER_CAP_START: sounds/events/double caps.ogg,
+  osobny od przekroczenia limitu pojedynczej nagrody.
+
+NAPRAWIONE BŁĘDY
+- Usunięto blokadę powtórzenia HALF_CAP i FULL_CAP przy niezmienionym
+  limicie. Każda kolejna niezależna wypłata może zagrać ponownie.
+- Potwierdzone zdarzenia nagrody grają od razu i nie są anulowane
+  przez późniejszy komunikat zakończenia zadania.
+- Godzinny start wywołuje tylko double caps.ogg, bez podwójnej
+  fanfary od informacji tekstowej.
+- W Soulbound v113.00.29+ EXP_BANK nie wywołuje overcap.ogg.
+  Starszy EXP_BANK na wcześniejszych serwerach zachowano.
+- Odczyt score/look/expbank, brak nagrody i nieprawidłowe markery
+  nie powodują dźwięku CAP. Bez zmian zasad EXP i ręcznego banku.
+- Starsze serwery ze zwykłymi liniami EXP zachowują fallback bez
+  sesyjnej blokady kolejnych nagród.
 
 ZGODNOŚĆ
-- Zachowano wcześniejsze efekty: Jammer koniec (v113.00.17), Start Jammer,
-  Over Cap EXP, Double EXP, prezenty dzienne i adwentowe, Bio Blast,
-  zatrucie, recall, kroki, muzyka walki i Soul Level.
-- Bez ingerencji w kod Soulbound MUD ani dane graczy.
-- Generic MUD v0.24.0+, komunikaty potwierdzone w
-  player/session_mixins/skill_learning.py z Soulbound v113.00.24.
+- Wciąż 87 OGG; nie dodano ani nie przerabiano nagrań.
+- Zachowano Jammer, awans Skill Level, prezenty, Bio Blast,
+  x2 EXP, recall, kroki, muzykę walki i awans Soul Level.
+- Zmieniono tylko kod i testy soundpacka; kod Soulbound MUD
+  i produkcyjna baza graczy bez zmian.
 
-TESTY I WYDANIE
-- Nowy test .github/tests/test_v166.lua: pozytywne i negatywne scenariusze
-  awansu umiejętności; zachowane wszystkie wcześniejsze testy Lua.
-- GitHub Actions sprawdza składnię Lua w Lupa, nagrania OGG i buduje
-  jedną pełną paczkę ZIP automatycznie.
-- Publikacja bez użycia CMD/BAT oraz bez ręcznego tworzenia Release.
+TESTY I PUBLIKACJA
+- Nowa regresja .github/tests/test_v167.lua: wielokrotne HALF/FULL/OVER
+  na tym samym limicie, osobny start eventu, brak fałszywych
+  dźwięków, zgodność ze starszymi wersjami.
+- Zachowano wcześniejsze testy Lua i składni Lupa.
+- GitHub Actions automatycznie buduje i publikuje jeden kompletny ZIP
+  po zmianie pack.toml. Bez skryptów CMD/BAT i ręcznego publikowania.
 
-OGRANICZENIE
-- Testy symulują formaty komunikatów serwera. Rzeczywisty odsłuch
-  w Generic MUD podczas gry wymaga potwierdzenia.
+UWAGA
+- Testy odtwarzają autentyczne formaty komunikatów v113.00.29.
+  Odsłuch podczas rzeczywistego grania wymaga potwierdzenia.
