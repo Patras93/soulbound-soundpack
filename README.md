@@ -1,15 +1,13 @@
-# Soulbound Soundpack v1.6.6
+# Soulbound Soundpack v1.6.7
 
-Natywny soundpack Lua dla Generic MUD v0.24.0+ i Soulbound v113.00.24 (ze zgodnością wsteczną). Zachowano **87 plików OGG**.
+Natywny soundpack Lua dla Generic MUD v0.24.0+ i Soulbound v113.00.29 (zgodność ze starszymi wydaniami). Zawiera **87 OGG**.
 
-**Awans Skill Level:** Komunikat \`Nazwa skilla awansuje na Skill Level N.\` odtwarza ten sam plik \`sounds/events/learned.ogg\`, co pierwsze nauczenie skilla. Zwykły Skill XP, użycie skilla i status pozostają bez dźwięku.
+**CAP EXP:** SOUND_EVENT HALF_CAP -> halfcap.ogg; FULL_CAP -> cap.ogg; OVER_CAP_REWARD -> overcap.ogg (rzeczywiste przekroczenie limitu); OVER_CAP_START -> double caps.ogg (godzinny start). Każdy kolejny rzeczywisty próg wypłaty może uruchomić ten sam dźwięk ponownie. Status i bank nie wyzwalają nagród.
 
-Zachowane dotychczasowe efekty Jammera, Over Cap, prezentów, Bio Blast, recalla, x2 EXP, kroków, muzyki walki i Soul Level.
+**Aktualizacja:** Generic MUD > Soundpacks > Manage installed soundpacks > Update from source, a następnie ponowne połączenie.
 
-**Aktualizacja:** Generic MUD → Soundpacks → Manage installed soundpacks → Update from source, następnie ponownie połącz się z grą.
+**Publikacja:** GitHub Actions automatycznie uruchamia testy i publikuje ZIP po zmianie pack.toml. Bez CMD/BAT.
 
-**Publikacja:** GitHub Actions automatycznie wykonuje testy i tworzy wydanie ZIP po aktualizacji \`pack.toml\`, bez skryptów CMD/BAT.
+[Releases](https://github.com/Patras93/soulbound-soundpack/releases/latest) | README_PL.txt | CHANGELOG_PL.txt
 
-[Releases](https://github.com/Patras93/soulbound-soundpack/releases/latest) · README_PL.txt · CHANGELOG_PL.txt
-
-Nagrania mogą być redystrybuowane wyłącznie zgodnie z uprawnieniami.
+Nagrania rozpowszechniaj wyłącznie zgodnie z posiadanymi prawami.
