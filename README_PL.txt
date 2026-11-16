@@ -1,35 +1,38 @@
-SOULBOUND SOUNDPACK v1.6.6 — INSTRUKCJA (PL)
+SOULBOUND SOUNDPACK v1.6.7 — INSTRUKCJA (PL)
 
-Projekt: https://github.com/Patras93/soulbound-soundpack
+Repozytorium: https://github.com/Patras93/soulbound-soundpack
 Wydania: https://github.com/Patras93/soulbound-soundpack/releases
-GRA: Soulbound v113.00.24 (zgodność zachowana z wcześniejszymi),
-Generic MUD v0.24.0+.
-Liczba nagrań: 87 OGG.
+Gra: Soulbound v113.00.29, zgodność wsteczna ze starszymi.
+Klient: Generic MUD v0.24.0+
+Zestaw: 87 niezmienionych nagrań OGG.
 
-NOWOŚĆ: AWANS SKILLA
-- Kiedy skill awansuje na kolejny Skill Level, gra ten sam learned.ogg,
-  który już słyszysz po nauczeniu nowej umiejętności.
-- Przykład komunikatu gry:
-  "Bio Blast awansuje na Skill Level 25."
-- Dźwięk NIE gra za zwykłe Skill XP, używanie skilla ani sprawdzanie poziomu.
-- Odsłuch samego dźwięku: sbs test learned.
+DŹWIĘKI EXP
+- HALF_CAP: events/halfcap.ogg — nagroda >= połowy limitu, < pełny.
+- FULL_CAP: events/cap.ogg — nagroda równa pełnemu limitowi.
+- OVER_CAP_REWARD: events/overcap.ogg — rzeczywista nagroda > limitu.
+- OVER_CAP_START: events/double caps.ogg — początek godzinnego
+  wydarzenia, NIE przekroczenie limitu nagrody.
+- Każda następna faktyczna wypłata może uruchomić ponownie
+  dźwięk, nawet przy niezmienionym limicie.
+- Sprawdzanie statusu, look, score, expbank nie gra dźwięków.
 
-ZACHOWANE DŹWIĘKI
-- events/noactoff.ogg — koniec Jammera.
-- events/stop.ogg — początek Jammera.
-- events/daygift.ogg — dzienny prezent.
-- events/advent.ogg — prezent adwentowy.
-- events/double caps.ogg — start wydarzenia Over Cap EXP.
-- Bio Blast, zatrucie, recall, x2 EXP, kroki, Soul Level, muzyka walki.
+SPRAWDZENIE W GENERIC MUD
+sbs test halfcap
+sbs test cap
+sbs test overcap
+sbs test doublecaps
+sbs status
+sbs diag
 
-AKTUALIZACJA W GENERIC MUD
-1. Otwórz Soundpacks > Manage installed soundpacks.
-2. Wybierz Soulbound Soundpack i Update from source.
-3. Po aktualizacji połącz się ponownie z grą.
-Możesz sprawdzić wersję przez sbs status i błędy przez sbs diag.
+AKTUALIZACJA
+Generic MUD > Soundpacks > Manage installed soundpacks >
+Update from source; następnie połącz się ponownie z grą.
+Soundpack opublikuje się automatycznie przez GitHub Actions.
+Nie trzeba uruchamiać CMD ani ręcznie otwierać GitHuba.
 
-PUBLIKACJA NA GITHUB
-GitHub Actions automatycznie uruchamia testy i udostępnia ZIP po zmianie
-pack.toml na main. Nie trzeba uruchamiać skryptów CMD ani BAT.
+POZOSTAŁE EFEKTY
+Zachowano wszystkie 87 OGG, w tym koniec Jammera, dźwięk nauki
+i awansu skilla, prezenty, Bio Blast, zatrucie, recall, x2 EXP,
+kroki, muzykę walki, Soul Level.
 
-Udostępniaj nagrania tylko z prawem do ich redystrybucji.
+Publicznie udostępniaj nagrania tylko z prawem do redystrybucji.
