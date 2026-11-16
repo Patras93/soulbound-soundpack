@@ -1,32 +1,32 @@
-SOULBOUND SOUNDPACK v1.6.5 — ZMIANY (PL)
+SOULBOUND SOUNDPACK v1.6.6 — ZMIANY (PL)
 
-NAPRAWA JAMMER — SOULBOUND MUD v113.00.17
-- events/noactoff.ogg: dźwięk końca Jammera odtwarza się teraz
-  na potwierdzony komunikat:
-  "Jammer na Upiór Velsal zakończył działanie."
-- Dopasowanie jest niezależne od nazwy przeciwnika (również gdy
-  komunikat widzi członek drużyny, który nie aktywował Jammera).
-- Bez dźwięku na akcje Stop z pozostałym czasem, samo rzucenie
-  Jammera, komunikaty informacyjne, podobne teksty i wylogowanie.
-- Zachowano stare komunikaty zakończenia Stop dla wcześniejszych
-  wersji Soulbound; nie zmieniono istniejącego pliku noactoff.ogg.
-- Wersja gry v113.00.17 wysyła nowe zakończenie jako ważny
-  komunikat walki do walczącego i pobliskich członków drużyny.
+DŹWIĘK AWANSU UMIEJĘTNOŚCI — SOULBOUND v113.00.24
+- Gdy wcześniej poznana umiejętność awansuje na następny poziom,
+  odtwarzany jest TEN SAM events/learned.ogg, co podczas nauczenia się skilla.
+- Wzorzec oparty na rzeczywistym komunikacie gry:
+  "<nazwa umiejętności> awansuje na Skill Level <poziom>."
+- Działa dla nazw umiejętności zawierających spacje, niezależnie od
+  liczby osiągniętego poziomu (od 2 wzwyż).
+- Dźwięk nie odtwarza się za zwykłe Skill XP, samo użycie, podgląd
+  stanu, informację o osiągnięciu maksimum ani teksty wiadomości [NEWS].
+- Poprzedni dźwięk nauczenia nowego skilla pozostaje bez zmian.
+- Nie dodano nowych nagrań: wciąż 87 OGG, bez przerabiania dźwięku.
 
-KOMPATYBILNOŚĆ
-- Wszystkie wcześniejsze 87 OGG zachowane bez zmian.
-- Bez zmian: Over Cap EXP, dzienne prezenty, Advent Gifts, Bio Blast,
-  zatrucie, recall, x2 EXP, kroki, Soul Level, muzyka walki.
-- Generic MUD v0.24.0+; Soulbound v107–v113 (w tym v113.00.17).
-- Nie zmieniono kodu ani bazy gry Soulbound.
+ZGODNOŚĆ
+- Zachowano wcześniejsze efekty: Jammer koniec (v113.00.17), Start Jammer,
+  Over Cap EXP, Double EXP, prezenty dzienne i adwentowe, Bio Blast,
+  zatrucie, recall, kroki, muzyka walki i Soul Level.
+- Bez ingerencji w kod Soulbound MUD ani dane graczy.
+- Generic MUD v0.24.0+, komunikaty potwierdzone w
+  player/session_mixins/skill_learning.py z Soulbound v113.00.24.
 
 TESTY I WYDANIE
-- Nowy zestaw .github/tests/test_v165.lua dla rzeczywistego tekstu v113.00.17
-  i zabezpieczenia przed fałszywym odtwarzaniem.
-- Zachowane wcześniejsze testy Lua i kontrola Lupa, a także sprawdzanie OGG.
-- Wydanie ZIP powstaje automatycznie przez GitHub Actions po zmianie
-  pack.toml na main; bez uruchamiania skryptów CMD/BAT.
+- Nowy test .github/tests/test_v166.lua: pozytywne i negatywne scenariusze
+  awansu umiejętności; zachowane wszystkie wcześniejsze testy Lua.
+- GitHub Actions sprawdza składnię Lua w Lupa, nagrania OGG i buduje
+  jedną pełną paczkę ZIP automatycznie.
+- Publikacja bez użycia CMD/BAT oraz bez ręcznego tworzenia Release.
 
-UWAGA
-- Testy odtwarzają komunikaty serwera w symulacji. Odsłuch na żywym
-  serwerze i w Generic MUD wymaga potwierdzenia w rozgrywce.
+OGRANICZENIE
+- Testy symulują formaty komunikatów serwera. Rzeczywisty odsłuch
+  w Generic MUD podczas gry wymaga potwierdzenia.
