@@ -784,7 +784,7 @@ local function on_line(line)
  if s:match('^.+ mowi:%s+.+') or s:match('^mowisz:%s+.+') then sound('say');return end
  -- Rzeczywista aktualna strefa z LOOK, a nie opis obcej mapy.
  -- Ten sam LOOK po docierasz nie powtarza dzwieku.
- local newarea=s:match('^[^%.]+%. strefa:%s*([^%.]+)%.
+ local newarea=s:match('^[^%.]+%. strefa:%s*([^%.]+)%.$')
  if newarea and newarea~='' then
   update_area(zone_hash(norm(newarea)))
   -- Opis wejscia do pokoju sam w sobie NIE jest zdarzeniem walki.
