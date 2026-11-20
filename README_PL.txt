@@ -1,38 +1,38 @@
-SOULBOUND SOUNDPACK v1.6.7 — INSTRUKCJA (PL)
+SOULBOUND SOUNDPACK v1.6.8 — INSTRUKCJA (PL)
 
 Repozytorium: https://github.com/Patras93/soulbound-soundpack
 Wydania: https://github.com/Patras93/soulbound-soundpack/releases
-Gra: Soulbound v113.00.29, zgodność wsteczna ze starszymi.
-Klient: Generic MUD v0.24.0+
-Zestaw: 87 niezmienionych nagrań OGG.
+Zgodność: Soulbound v116.00.43 i wcześniejsze komunikaty;
+Generic MUD v0.24.0+. Łącznie 87 OGG.
 
-DŹWIĘKI EXP
-- HALF_CAP: events/halfcap.ogg — nagroda >= połowy limitu, < pełny.
-- FULL_CAP: events/cap.ogg — nagroda równa pełnemu limitowi.
-- OVER_CAP_REWARD: events/overcap.ogg — rzeczywista nagroda > limitu.
-- OVER_CAP_START: events/double caps.ogg — początek godzinnego
-  wydarzenia, NIE przekroczenie limitu nagrody.
-- Każda następna faktyczna wypłata może uruchomić ponownie
-  dźwięk, nawet przy niezmienionym limicie.
-- Sprawdzanie statusu, look, score, expbank nie gra dźwięków.
+NAPRAWA ZMIANY STREFY
+- events/change area.ogg — wejście do INNEJ strefy świata.
+- Działa po prawdziwym dotarciu do granicy, także przy
+  prowadzeniu, gdy serwer nie robi automatycznego LOOK.
+- Rozpoznaje potwierdzenia "Docierasz do", "Dopływasz do"
+  oraz "WEJŚCIE" z katalogiem granic v116.00.43.
+- Nie gra przy każdym pokoju w rozległym terenie, samym
+  wydaniu polecenia ruchu ani przy oglądaniu mapy.
+- Po dotarciu nie gra ponownie podczas LOOK tej samej strefy.
+- Zachowano starsze wykrywanie stref przy opisie lokacji.
+- Zmiana terenu nie wymaga nowego pliku OGG.
 
-SPRAWDZENIE W GENERIC MUD
-sbs test halfcap
-sbs test cap
-sbs test overcap
-sbs test doublecaps
-sbs status
-sbs diag
+AKTUALIZACJA W GENERIC MUD
+1. Otwórz Soundpacks > Manage installed soundpacks.
+2. Wybierz Soulbound Soundpack i Update from source.
+3. Po aktualizacji połącz się ponownie z grą.
+Sprawdzenie wersji: sbs status.
+Diagnostyka: sbs diag.
+Test pojedynczego nagrania: sbs test area.
 
-AKTUALIZACJA
-Generic MUD > Soundpacks > Manage installed soundpacks >
-Update from source; następnie połącz się ponownie z grą.
-Soundpack opublikuje się automatycznie przez GitHub Actions.
-Nie trzeba uruchamiać CMD ani ręcznie otwierać GitHuba.
+POZOSTAŁE DŹWIĘKI
+Wszystkie dotychczasowe efekty zachowano, w tym:
+CAP, HALF CAP, Over CAP, Jammer, prezenty, awanse skilli
+i Duszy, Bio Blast, leczenie, muzykę walki i kroki.
 
-POZOSTAŁE EFEKTY
-Zachowano wszystkie 87 OGG, w tym koniec Jammera, dźwięk nauki
-i awansu skilla, prezenty, Bio Blast, zatrucie, recall, x2 EXP,
-kroki, muzykę walki, Soul Level.
+PUBLIKACJA
+GitHub Actions automatycznie sprawdza Lua i dźwięki, buduje
+pełny ZIP i publikuje Release po zmianie pack.toml.
+Bez uruchamiania jakichkolwiek skryptów CMD/BAT.
 
-Publicznie udostępniaj nagrania tylko z prawem do redystrybucji.
+Nagrania udostępniaj tylko przy posiadaniu praw do ich rozpowszechniania.
