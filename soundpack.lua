@@ -1,4 +1,4 @@
--- SOULBOUND SOUNDPACK v1.6.7 - Native Generic MUD (mud.play)
+-- SOULBOUND SOUNDPACK v1.6.8 - Native Generic MUD (mud.play)
 -- Komunikaty ruchu i strefy: zweryfikowane w Soulbound v107.00.0. SOUND_EVENT pozostaje kompatybilny.
 -- Regula bezpieczenstwa: brak dzwieku jest lepszy niz falszywy dzwiek.
 local active, volume = true, 0.7
@@ -66,6 +66,24 @@ local function norm(s)
  s=s:gsub('—','-'):gsub('–','-')
  return (s:gsub('^%s+',''):gsub('%s+$',''))
 end
+
+-- Katalog granicznych przejsc v116.00.43: 291 unikalnych par z 295 wyjsc.
+-- 20 081 lokacji, 141 stref. Wszystkie 71 970 wyjsc sprawdzone
+-- bez falszywych dopasowan do ruchu wewnatrz jednej strefy.
+local function zone_hash(str)
+ local h=5381
+ for i=1,#str do h=(h*33+str:byte(i))%4294967296 end
+ return h
+end
+local zone_border={}
+local zone_packed=[[
+1jmko:36wb42 be0ng:495okp j1gvl:8s0me5 19p8jj:2wakl6 1i7k1i:8s0me5 1xjcp9:5tw8op 2adbcz:17p9jon 2bmda3:8s0me5 2fcfzu:11nw1co 2n2726:eiatm7 2toqp5:1y1yawr 38fq9h:n2mz98 3rr3k6:n8s7ca 3xo0b1:156mnmz 3xuc6s:oub381 40qkym:1v5tw4b 436n78:c88ltt 4nq1h0:11rxqn2 4w9b9m:h6wsrh 5gfwvw:17p9jon 5nee40:8s0me5 5qe1bx:8s0me5 698s47:nu0x3o 6a8bcg:16jqcj9 70q3vn:95jtgc 7q4ke7:oub381 7qzwt7:mh4i1x 7vfb9y:nhqdl1 8a0h2v:qixqdt 8ahrv6:1uco5qr 8h5qqf:9788fa 8kvzgq:8tyydu 90jj96:eiatm7 93k52v:1nxw73r 94iiu2:19mhgz1 9d7ffk:8s0me5 9gs6yy:11rxqn2 9h8nto:1omx4y3 9hvfa1:8s0me5 a080n5:1tey1g7 a0sbdj:wma8yi a5m1ru:11nw1co aaixgg:495okp ak09wo:2tt65z ayrc77:8s0me5 azr1gm:2gs2hw b1g4fu:1flmgg0 blo9i6:qpmxq5 bwgdvw:gx5xhu c35y1n:lmd230 cam68y:nkylv4 cmumfd:fgvsbw d9p75h:1mbqeo4 dvzd3j:yklwee easryt:11nw1co er9v42:nhqdl1 et5oy5:qnj9xr ew7a0u:2tt65z ezucxw:18lnqdc fkkt9g:495okp fn4yjk:bvka2g fnlzus:7xc81a g8paur:1h87697 g9916h:1f0jfe2 g9dal2:1nuqksx gd7c5u:8s0me5 gfzdyj:scw3pc gtbo9k:vlbr1d gx7egu:e71t1s hd4i9x:19wy7zz hdgttl:495okp hjp6bd:11nw1co hyq6rj:rn5lh0 ia3qul:8s0me5 iijda1:lev0ac j2srod:1a2he9m j7ro49:1bn4k0p jbn9oj:1okirrj jdsl8w:8s0me5 jow15d:1osb747 jxdhgc:495okp kgq14m:tkz7e6 klv01q:8s0me5 klw1wb:1mbqeo4 kngw0k:8s0me5 kppjmm:1nk3ro2 ksk6zm:495okp kspg0i:rrd7oo lfc8dx:l3u4g ll659d:ngox0d loal3h:jvvf35 lrk2pv:hvdmyw m1f5x3:lnor2y m1fih9:13p5ksn m64zwx:13p5ksn mnrm3z:1k69g3y mnzvjf:1dmz9qg nclsxq:8o80zc o8bgv8:1cn44f0 obfvu2:l3u4g oey6u8:vlbr1d ofcjni:euz09o oq65sx:13vo6ih ow773j:1nk3ro2 ow8xwm:9c45xx pup8rg:wgw6se pupkp2:biyzhc pw7xbs:60sch3 q3tn59:495okp qpgyo1:44y5ap qzc525:8o80zc r6debw:wquq0e rb2wmf:tymocx rcw7xa:1r43mmy rluqt1:lmd230 ro6gjd:18lnqdc rqlk95:8s0me5 rrh8cr:2u84gl rrkvu8:1jp1bh2 rv53fl:y11anl s4lrsb:8s0me5 s56n06:95jtgc s7w9qz:8s0me5 sfwspp:1etm7a6 sm7nqn:1jjn9ay sn99fp:8s0me5 sqeg3a:tkz7e6 stx8c7:t2rbn0 t2k7pd:1987gja t5dmpd:495okp ta4xch:wsnh4r td9gl1:495okp tgou2y:1osb747 tlttst:1xzbguk tohyyg:e71t1s tsn1cs:mh4i1x twqmvp:1b6romb u4i39m:zi3m9a ubndxf:o709d4 ud45od:1ul12ni uf1872:1r43mmy uh63ep:1cems8h uyopx7:n2mz98 v653wp:1x4n3ca v65elb:36wb42 vcucit:b4vdy5 vjxi9b:xigty vr3kyw:yzm6wz vy2vh6:1bn4k0p waxi1y:495okp wofz1s:gx5xhu wqjjhz:nm2z6h wsjcj3:1lidzec x9vns2:1ihs19h xakvop:ju1sy7 xiz04y:9788fa xmnz1p:495okp xnu0om:1h7mib2 xow3j3:19ohz2s y36fp2:5tw8op ydfvsh:8s0me5 yf4uka:b4vdy5 ypxzrq:11nw1co yu4oi3:1ww6zjd yum2uv:8s0me5 z9oln9:9ybyya zdjixm:6qoloj zlnk3c:9ybyya zsq170:1987gja 10ek5sf:yz8wvr 10l0eog:13p5ksn 1180yuy:1lidzec 11x787k:1wo9e2z 12bhhf7:o709d4 12e5ux7:8s0me5 12kkmzf:1ew4msi 13ii0d5:8s0me5 13nkeja:1x4n3ca 13uo5z7:32vsr9 147k220:1nadr7y 14sdq0b:8s0me5 14sv8um:10g03jj 15dex4x:172xonv 15jgh16:10g03jj 15tffly:1jp1bh2 166v9ts:kej4uc 16bsckn:1omx4y3 16c958t:1wf8wx 16oap5b:nkylv4 16snbiw:142isiw 1710s8u:44y5ap 17yicio:wcw04f 18h9dwf:1bx6iq2 18xs96k:8s0me5 196inae:1pq08nn 1a6awel:162ns99 1a83dsz:60sch3 1abzfdm:c88ltt 1aj0w5v:wa50v6 1aomn7m:1cn44f0 1bgsy8w:8s0me5 1bvp38t:kej4uc 1bvz2l1:1lbghxb 1c19gr7:hwb6fb 1cdc4yq:16jqcj9 1d4amt1:ju1sy7 1d7gud8:xigty 1daqgmn:bwhud7 1dd5y7e:yklwee 1djswbc:1cvvgai 1dmiw8i:19wy7zz 1dmu4vf:t2rbn0 1dtzh5t:scw3pc 1dury3d:32vsr9 1ed8v98:1ig8u2r 1ehgt6p:13p5ksn 1enm0yt:biyzhc 1fhaocw:1cvvgai 1fk4dgn:2u84gl 1fltx9l:la22yr 1fvvg5z:wzvr25 1fz61dk:8s0me5 1g11228:1h87697 1genlcg:1k69g3y 1ghknko:b6p033 1gkbygg:fgvsbw 1gqz5dn:yklwee 1hi04a5:wa50v6 1hmnmbl:1xkq1jk 1hv7ypv:wma8yi 1iafrup:8s0me5 1ixvahd:yklwee 1iyy488:1yfri89 1iyyepz:wsnh4r 1j27h5h:yz8wvr 1j4guq6:1c8pn8x 1jbaeue:11nw1co 1jgyix0:1v5tw4b 1kmr8p8:1h7mib2 1lma3am:19bae5u 1lr55q3:1yfri89 1lx7tsw:rn5lh0 1lyd92j:1xkq1jk 1m0gq9s:1nadr7y 1m2l2r5:8s0me5 1m9i8mm:1wf8wx 1mmhiam:qnj9xr 1mn4q8a:19ohz2s 1n0tdxn:8s0me5 1nssb2x:1ihs19h 1nyrqa5:1cems8h 1o6ittp:10idsdn 1o73226:6qoloj 1oahmj0:1ul12ni 1onm3qd:bwhud7 1oqhxkx:8s0me5 1orhp2b:1nao2bo 1p1hrqp:8s0me5 1pz0cc4:wcw04f 1q2sj77:qixqdt 1qbdswe:1ww6zjd 1qdl5gh:1og23nc 1r23fbt:1jjn9ay 1sjqfym:156mnmz 1snppnv:1lbghxb 1srh3x2:8s0me5 1srvvmx:euz09o 1tpo3k8:h6wsrh 1tw4s7y:1uco5qr 1twujuj:7cbe1v 1u0ljk9:8tyydu 1udvp8c:n8s7ca 1ueo1j6:wgw6se 1uqnnu9:8rywc8 1uszndp:yklwee 1v9dmun:495okp 1v9tpqh:qpmxq5 1vtm9y0:1q4pct1 1vwekw4:1ew4msi 1w1ha6l:rrd7oo 1wfh1hu:142isiw 1whbhgv:7xc81a 1x12547:1q4pct1 1x4ocdh:1c8pn8x 1xbz593:1dmz9qg 1xg636o:1nao2bo 1xnidhg:1etm7a6 1y1qfsu:bvka2g 1ya0cip:1y1yawr 1yevcnq:495okp 1yrodjm:10idsdn
+]]
+for token in zone_packed:gmatch('%S+') do
+ local a,b=token:match('^([0-9a-z]+):([0-9a-z]+)$')
+ if a and b then zone_border[tonumber(a,36)]=tonumber(b,36) end
+end
+
 local function has(s,p) return s:find(p,1,true)~=nil end
 local function say(s) if mud and mud.echo then pcall(function() mud.echo('[Soulbound OGG] '..s) end) end end
 local function now()
@@ -297,6 +315,29 @@ local function sound(key,delay,channel,force)
   return play(fx[key],channel or 'sb_'..key,delay or 0,force)
  end
 end
+
+-- Potwierdzona zmiana strefy, a nie kazdy krok.
+local function update_area(zone)
+ if not in_world or not zone then return end
+ if state.area and state.area~=zone then
+  end_combat('zmiana strefy')
+  sound('area',0,'sb_area')
+ end
+ state.area=zone
+end
+-- Prowadzenie moze pominac look: Docierasz/Doplywasz/WEJSCIE
+-- gwarantuja realne dotarcie do lokacji, bez zgadywania po komendzie ruchu.
+local function movement_area_on_line(s)
+ if not in_world or not state.area then return end
+ local dest=s:match('^docierasz do:%s*(.-)%.$') or
+            s:match('^doplywasz do:%s*(.-)%.$') or
+            s:match('^wejscie:%s*(.-)%.$')
+ if not dest or dest=='' then return end
+ local key=zone_hash(tostring(state.area)..'|'..norm(dest))
+ local new_zone=zone_border[key]
+ if new_zone and new_zone~=state.area then update_area(new_zone) end
+end
+
 -- Progi lokalnego soundpacku, serwer przekazuje HP liczbowe.
 local levels={'excellent','scratches','small wounds','quite a few','pretty hurt','big nasty','awful','dying'}
 local function bucket(current,maximum,who)
@@ -664,6 +705,7 @@ local function on_line(line)
  if s=='' then return end
  if s:match('^sound_event%s+') then on_sound_event(s);return end
  city_walk_on_line(s)
+ movement_area_on_line(s)
  -- Serwer v12.00.8 rozglasza REALNY zgon dowolnego gracza wszystkim zalogowanym.
  -- Dzwiek TYLKO dla innej postaci; wlasna smierc ma mort + You died.
  -- Rozpoznawaj wylacznie naglowek globalny, nie wpisy w help/changes/czacie.
@@ -740,14 +782,11 @@ local function on_line(line)
  if s:match('^%[gildia%]') or s:match('^%[guild%]') or s:match('^%[druzyna%]') or s:match('^%[party%]') then return end
  if s:match('^%[tell do [^%]]+%]') then return end
  if s:match('^.+ mowi:%s+.+') or s:match('^mowisz:%s+.+') then sound('say');return end
- local newarea=s:match('^.+%. strefa:%s*(.-)%.?$')
+ -- Rzeczywista aktualna strefa z LOOK, a nie opis obcej mapy.
+ -- Ten sam LOOK po docierasz nie powtarza dzwieku.
+ local newarea=s:match('^[^%.]+%. strefa:%s*(.-)%.$')
  if newarea and newarea~='' then
-  newarea=newarea:gsub('%.%s*$','')
-  if state.area and state.area~=newarea then
-   end_combat('zmiana strefy')
-   sound('area',1)
-  end
-  state.area=newarea
+  update_area(zone_hash(norm(newarea)))
   -- Opis wejscia do pokoju sam w sobie NIE jest zdarzeniem walki.
   return
  end
@@ -1098,8 +1137,8 @@ mud.alias('sbs *',function(line,captures)
  arg=norm(arg)
  if arg=='on' then active=true;say('ON')
  elseif arg=='off' then active=false;end_combat('soundpack off');reset_quest_gold();cancel_pending_xp();temple_reset();bioblast_reset();over_cap_event_active=false;say('OFF')
- elseif arg=='status' then say('v1.6.7 '..(active and 'ON' or 'OFF')..'; efekty '..math.floor(volume*100)..'%; muzyka '..(music_enabled and 'ON' or 'OFF')..' '..math.floor(music_mix*100)..'%; kroki_miasto '..(city_steps_enabled and 'ON' or 'OFF')..'; kroki_podziemia '..(cave_steps_enabled and 'ON' or 'OFF')..'; cap '..tostring(cap or 'nieznany')..'; odebrane linie '..counters.lines..'; dzwieki '..counters.played)
- elseif arg=='diag' then say('DIAG v1.6.7: w_swiecie='..tostring(in_world)..'; linie='..counters.lines..'; rozpoznania='..counters.events..'; odtworzenia='..counters.played..'; bledy='..counters.errors..'; mud.play='..(mud and mud.play and 'dostepny' or 'BRAK')..' (typ '..type(mud.play)..')'..'; ostatnie zdarzenie='..last_event..'; ostatnia linia='..last_line..'; ostatni blad='..last_error..'; walki='..tostring(in_combat)..'; powalony='..tostring(player_downed)..'; stop muzyki='..stopped_music..'; zmiany utworu='..music_changes..'; muzyka='..(music_enabled and 'ON' or 'OFF')..' '..math.floor(music_mix*100)..'%; przyczyna='..last_stop_reason..'; slash=przekazywany bezposrednio; recall_odp='..recall_confirms..'; x2_start='..xp_event_starts..'; x2_koniec='..xp_event_endings..'; overcap_start='..over_cap_event_starts..'; prezenty='..advent_gifts_received..'; recall_innych='..temple_recall_count..'; x2_aktywny='..tostring(xp_event_active)..'; sound_event='..tostring(sound_protocol_count)..'; nowy_protokol='..tostring(sound_protocol)..'; ostatni_marker='..last_sound_marker)
+ elseif arg=='status' then say('v1.6.8 '..(active and 'ON' or 'OFF')..'; efekty '..math.floor(volume*100)..'%; muzyka '..(music_enabled and 'ON' or 'OFF')..' '..math.floor(music_mix*100)..'%; kroki_miasto '..(city_steps_enabled and 'ON' or 'OFF')..'; kroki_podziemia '..(cave_steps_enabled and 'ON' or 'OFF')..'; cap '..tostring(cap or 'nieznany')..'; odebrane linie '..counters.lines..'; dzwieki '..counters.played)
+ elseif arg=='diag' then say('DIAG v1.6.8: w_swiecie='..tostring(in_world)..'; linie='..counters.lines..'; rozpoznania='..counters.events..'; odtworzenia='..counters.played..'; bledy='..counters.errors..'; mud.play='..(mud and mud.play and 'dostepny' or 'BRAK')..' (typ '..type(mud.play)..')'..'; ostatnie zdarzenie='..last_event..'; ostatnia linia='..last_line..'; ostatni blad='..last_error..'; walki='..tostring(in_combat)..'; powalony='..tostring(player_downed)..'; stop muzyki='..stopped_music..'; zmiany utworu='..music_changes..'; muzyka='..(music_enabled and 'ON' or 'OFF')..' '..math.floor(music_mix*100)..'%; przyczyna='..last_stop_reason..'; slash=przekazywany bezposrednio; recall_odp='..recall_confirms..'; x2_start='..xp_event_starts..'; x2_koniec='..xp_event_endings..'; overcap_start='..over_cap_event_starts..'; prezenty='..advent_gifts_received..'; recall_innych='..temple_recall_count..'; x2_aktywny='..tostring(xp_event_active)..'; sound_event='..tostring(sound_protocol_count)..'; nowy_protokol='..tostring(sound_protocol)..'; ostatni_marker='..last_sound_marker)
  elseif arg=='watch on' then debug_mode=true;say('Podglad linii WLACZONY; sbs watch off wylacza')
  elseif arg=='watch off' then debug_mode=false;say('Podglad linii WYLACZONY')
  elseif arg=='coverage' then say('Soulbound v107-v113: HALF_CAP/FULL_CAP/OVER_CAP_REWARD/OVER_CAP_START, starsze EXP_BANK obslugiwane. Pozostale zdarzenia na podstawie potwierdzonego tekstu. OGG nie dodaja nowych zdarzen po stronie serwera.')
@@ -1170,4 +1209,4 @@ mud.trigger([[^SOUND_EVENT[ ]+]],function(line,captures) on_line(line) end,{rege
 -- Znaczniki SOUND_EVENT sa obslugiwane tylko przez pierwszy wyzwalacz.
 -- W przeciwnym razie player_login / tell_received mogly uruchomic efekt dwa razy.
 mud.trigger([[^(?!SOUND_EVENT[ ]+).+]],function(line,captures) on_line(line) end,{regex=true})
-say('Zaladowano v1.6.7 dla Soulbound v107-v113.00.29+ - Generic MUD, Twoje OGG.')
+say('Zaladowano v1.6.8 dla Soulbound v116.00.43 - Generic MUD, Twoje OGG.')
