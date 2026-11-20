@@ -1,5 +1,6 @@
 local p=assert(arg[1],'soundpack.lua path required')
-assert(loadfile(p),'Lua syntax error')
+local chunk,parse_error=loadfile(p)
+assert(chunk,parse_error)
 local plays,stops,alarms,timers,active={}, {}, {}, {}, {}
 local ordinary,event,alias
 local t=0
