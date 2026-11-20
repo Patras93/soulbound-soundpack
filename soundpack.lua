@@ -784,7 +784,433 @@ local function on_line(line)
  if s:match('^.+ mowi:%s+.+') or s:match('^mowisz:%s+.+') then sound('say');return end
  -- Rzeczywista aktualna strefa z LOOK, a nie opis obcej mapy.
  -- Ten sam LOOK po docierasz nie powtarza dzwieku.
- local newarea=s:match('^[^%.]+%. strefa:%s*(.-)%.$')
+ local newarea=s:match('^[^%.]+%. strefa:%s*([^%.]+)%.
+ if newarea and newarea~='' then
+  update_area(zone_hash(norm(newarea)))
+  -- Opis wejscia do pokoju sam w sobie NIE jest zdarzeniem walki.
+  return
+ end
+ -- Serwer oznacza powalonego gracza w 'look' i podgladzie druzyny.
+ -- Nie mylic ze zwlokami mobow oraz instrukcja w help.
+ if s:match('^.-%(%s*powalony%s*%-+%s*mozna wskrzesic%s*%)') or
+    s:match('^.-powalony%s*%-%s*mozna wskrzesic%.') then sound('corpse',1);return end
+ -- Look na mobie jest dwuliniowy: osobno nazwa, potem HP z bazowymi obrazeniami.
+ local lookname=s:match('^(.+)%. przeciwnik%.$')
+ if lookname then look_mob=true;mob_name=lookname;state.mob=nil;return end
+ local target=s:match('cel (.-)%.%s') or s:match('^uzywasz .- na (.-)%.%s*zadajesz')
+ if target and target~=mob_name then mob_name=target;state.mob=nil end
+ -- Dokladne komunikaty serwera 12.00.7: walka (Bron Duszy i skille).
+ -- Przeciwnik ma priorytet nad HP gracza, aby nie pomylic celow.
+ local mh,mm=s:match('przeciwnik:%s*(%d+)%s+z%s+(%d+)%s+hp')
+ if not mh then mh,mm=s:match('przeciwnik:%s*(%d+)%s+z%s+(%d+)%s+zycia') end
+ if mh and not sound_protocol then last_mob_hp={tonumber(mh),tonumber(mm)};health(mh,mm,'mob') end
+ -- Odczyt look na mobie zawiera tez Bazowe obrazenia, wiec to NIE nasze HP.
+ local ah,am=s:match('^hp:%s*(%d+)%s+z%s+(%d+)')
+ if ah and (has(s,'bazowe obrazenia:') or look_mob) then look_mob=false;last_mob_hp={tonumber(ah),tonumber(am)};if not sound_protocol then health(ah,am,'mob') end;return end
+ if ah then look_mob=false;update_vital('hp',ah,am,'snapshot');return end
+ -- Sprawdzone w kodzie Soulbound 12.00.8: kolejne skoki HP podczas
+ -- leczenia, Regenu, odpoczynku, mikstur i obrazen. Tylko nasze HP.
+ local regen_amount,regen_h,regen_max=s:match('^regen odnawia (%d+) hp%. hp (%d+) z (%d+)')
+ if regen_h then update_vital('hp',regen_h,regen_max,'event',regen_amount);return end
+ local rest_h,rest_max=s:match('^regeneracja:%s*hp (%d+) z (%d+)')
+ if rest_h then
+  update_vital('hp',rest_h,rest_max,'event')
+  local rest_mana,rest_mmax=s:match('mana%s+(%d+)%s+z%s+(%d+)')
+  if rest_mana then update_vital('mana',rest_mana,rest_mmax,'event') end
+  return
+ end
+ -- Potwierdzone zuzycie mikstury. Nastepne dwie linie raportuja aktualne zasoby.
+ local potion_gain=s:match('^uzywasz .+%. odzyskujesz (.+)%.$')
+ if potion_gain and (has(potion_gain,' hp') or potion_gain:match('^%d+ hp')) then
+  potion_hp_gain=tonumber(potion_gain:match('(%d+)%s+hp')) or 0
+  potion_vitals_until=counters.lines+4
+ end
+ local ph,pmax=s:match('^hp%s+(%d+)%s+z%s+(%d+)%.?$')
+ if ph then
+  if counters.lines<=potion_vitals_until then
+   update_vital('hp',ph,pmax,'event',potion_hp_gain)
+   potion_hp_gain=0
+   potion_vitals_until=counters.lines+1 -- opcjonalna linia Mana bez przestarzalego kontekstu
+  else
+   update_vital('hp',ph,pmax,'snapshot')
+  end
+  return
+ end
+ local potion_mana,potion_mmax=s:match('^mana%s+(%d+)%s+z%s+(%d+)%.?$')
+ if potion_mana then
+  local mode=counters.lines<=potion_vitals_until and 'event' or 'snapshot'
+  update_vital('mana',potion_mana,potion_mmax,mode)
+  if mode=='event' then potion_vitals_until=-100000 end
+  return
+ end
+ local hh,hmax=s:match('masz teraz (%d+) z (%d+) hp')
+ if not hh then hh,hmax=s:match('masz (%d+) z (%d+) hp') end
+ if not hh then hh,hmax=s:match('twoje zycie:%s*(%d+) z (%d+)') end
+ if hh then
+  local gain=tonumber(s:match('odzyskujesz (%d+) hp'))
+  update_vital('hp',hh,hmax,'event',gain)
+ end
+ -- Inny gracz lub sojusznik leczy nas, ale komunikat pokazuje tylko
+ -- RZECZYWISTA liczbe odzyskanych HP. Aktualizujemy znany stan,
+ -- bez zgadywania, gdy bazowego HP jeszcze nie znamy.
+ if not hh then
+  local ally_gain=tonumber(s:match('^.+ leczy cie o (%d+) hp%.$'))
+  -- Heal Beam otrzymany od innego gracza nie zawiera koncowego HP.
+  if not ally_gain then ally_gain=tonumber(s:match('^.+ uzywa heal beam%. odzyskujesz (%d+) hp%.$')) end
+  -- Wlasny Heal Beam zwraca nazwe osoby leczonej, nie procent HP.
+  if not ally_gain and self_name then
+   local healed_name,n=s:match('^heal beam:%s*(.-)%s+odzyskuje (%d+) hp%.$')
+   if healed_name and norm(healed_name)==self_name then ally_gain=tonumber(n) end
+  end
+  if ally_gain and ally_gain>0 and state.hp and state.hp[2]>0 then
+   update_vital('hp',math.min(state.hp[2],state.hp[1]+ally_gain),state.hp[2],'event')
+  end
+ end
+ local mana_inline,mana_max=s:match('mana:%s*(%d+) z (%d+)')
+ if mana_inline and not s:match('^mana:') and not s:match('przeciwnik:') then update_vital('mana',mana_inline,mana_max,'event') end
+ local ma,mb=s:match('^mana:%s*(%d+)%s+z%s+(%d+)')
+ if ma then update_vital('mana',ma,mb,'snapshot');return end
+ -- Sygnaly z konkretnego kodu Soulbound 12.00.7 (bez zgadywania po slowie 'walka').
+ if s:match('^walka w czasie rzeczywistym rozpoczeta%.') then
+  -- Serwer moze dopisac linie walki tuz po powaleniu. Nie wznow muzyki.
+  end_combat('nowa walka')
+  if not player_downed then in_combat=true end
+  return
+ end
+ if s=='koniec walki: wszyscy przeciwnicy zostali pokonani.' then
+  end_combat('koniec walki')
+  return
+ end
+ if s=='wycofujesz sie z walki.' then
+  end_combat('ucieczka')
+  return
+ end
+ -- Godzinny event x2 EXP: TYLKO oficjalny START serwera, nigdy zwykla nagroda EXP.
+ -- Status eventxp nie jest nowym startem; START jest wysylany raz na przelomie godziny.
+ if s:match('^event x2 exp start[%.!]') then
+  if xp_event_active~=true then
+   xp_event_starts=xp_event_starts+1
+   sound('doubleexp',0)
+  end
+  xp_event_active=true
+  return
+ end
+ if s=='event x2 exp zakonczony. nastepny start na poczatku kolejnej godziny.' then
+  if in_world and xp_event_active~=false then
+   xp_event_endings=xp_event_endings+1
+   sound('multiplierdown',0,'sb_doubleexp_end')
+  end
+  xp_event_active=false
+  return
+ end
+ if s:match('^event x2 exp zakonczony') or s:match('^event x2 exp:%s*nastepny start') then
+  xp_event_active=false
+  return
+ end
+ if s:match('^event x2 exp aktywny%.') then
+  xp_event_active=true -- to tylko status, bez dzwieku
+  return
+ end
+ -- v108: limit nagrody EXP x2, NIE podwojenie zdobywanego EXP.
+ -- Odtwarzaj tylko oficjalne rozpoczecie, odrebne od eventu x2 EXP.
+ if s=='event over cap start. przez 15 minut limit nagrody exp x2; sam exp nie jest podwajany.' then
+  -- Nowy marker OVER_CAP_START jest autorytatywny, tekst nie dubluje OGG.
+  if in_world and not reward_protocol_v11329 and not over_cap_event_active then
+   over_cap_event_starts=over_cap_event_starts+1
+   sound('doublecaps',0,'sb_overcap_event_start')
+  end
+  over_cap_event_active=true
+  return
+ end
+ if s=='event over cap zakonczony. limity exp wrocily do normy.' then
+  over_cap_event_active=false
+  return
+ end
+ -- Bio Blast Magiteka, nie Bio Blaster inzyniera.
+ local bio_damage=tonumber(s:match('^bio blast:%s*.+ otrzymuje (%d+) obrazen%. hp %d+%.'))
+ if bio_damage and bio_damage>0 and in_world then
+  bioblast_window()
+  if not bio_hit_played then
+   bio_hit_played=true
+   sound('biohit',0,'sb_bioblast')
+  end
+  return
+ end
+ if s=='bio blast: umiejetnosc naklada efekt: trucizna.' then
+  if in_world then
+   bioblast_window()
+   if not bio_poison_played then
+    bio_poison_played=true
+    sound('poisoned',0,'sb_biopoison')
+   end
+  end
+  return
+ end
+ -- Nowe wydarzenia świata i bossowie: tylko potwierdzone ogłoszenia
+ -- serwera; nie reagujemy na /eventy, listy, statusy ani Event x2 EXP.
+ -- Po kilku ogłoszeniach z tej samej rotacji gra jeden krótki sygnał.
+ if in_world and (
+     s:match('^wydarzenie swiata: .+! boss: .+%. miejsce: .+%. czas wydarzenia: 3 godziny%. prawdziwy boss, wspolny exp i lupy%.$') or
+     s:match('^wydarzenie swiata: .+%. miejsce: .+%. wydarzenie jest prawdziwa walka; solo i druzyny moga wziac udzial%.$') or
+     s:match('^wydarzenie swiata: .+ rozpoczyna .+! obozowisko: .+%. mozna walczyc solo lub z druzyna%.$') or
+     s:match('^wydarzenie admina: .+%. potwory beda dostepne przez maksymalnie 30 minut poza walka%.$')
+    ) then
+  sound('announce',8,'sb_announce')
+  return
+ end
+ -- Dzwiek recall WYŁĄCZNIE na potwierdzenie serwera po zmianie room_id.
+ -- Wpisanie /, pokoj Swiatyni, podsumowanie druzyny i samo pojawienie
+ -- sie innego gracza nie sa potwierdzeniem teleportacji NASZEJ postaci.
+ if s=='teleportujesz sie do swiatyni odrodzenia.' or
+    s:match('^.+ uruchamia teleport druzyny%. zostajesz przeniesiony do swiatyni odrodzenia%.$') then
+  end_combat('teleport do swiatyni')
+  recall_confirms=recall_confirms+1
+  sound('recall',0)
+  return
+ end
+ -- Serwer zwraca 'Juz jestes' i teleportacja NIE zaszla.
+ -- Dotyczy tez czlonka druzyny, ktory byl juz w Swiatyni.
+ if s=='juz jestes w swiatyni odrodzenia.' or
+    s:match('^.+ uruchamia teleport druzyny%. juz jestes w swiatyni odrodzenia%.$') then
+  return -- brak dzwieku, brak potwierdzenia i brak ingerencji w kanaly
+ end
+ if s:match('^.+ znika w swietle swiatyni%.$') then return end
+ local arriving=s:match('^(.+) pojawia sie w swiatyni odrodzenia%.$')
+ if arriving then temple_arrival(arriving);return end
+ -- Zakaz odpalania efektow z list, historii, opisu czy polecen changes.
+ if s:match('^nieznana komenda') then sound('wrong',1);return end
+ -- Wlasny zgon oraz stan powalenia: oba musza zatrzymywac kondycje mobow.
+ if s:match('^pokonuje cie ') or s:match('^giniesz[!%.]') or s:match('^twoja postac umiera') then death();return end
+ if s:match('^jestes powalony[%.!]') then
+  if not player_downed then death() end
+  end_combat('wlasna postac powalona')
+  return
+ end
+ -- Komunikat do WSKRZESZONEGO, inny niz komunikat osoby wskrzeszajacej.
+ if s:match('^.+ wskrzesza cie%. wracasz do walki z %d+ hp i %d+ many%.$') then
+  player_downed=false
+  end_combat('wskrzeszono nasza postac')
+  state.hp=nil;state.mana=nil;state.player=nil;state.full=false
+  sound('revive',0,'sb_revival')
+  return
+ end
+ -- Samoodrodzenie i Phoenix Egg przywracaja mozliwosc muzyki, ale
+ -- nie odtwarzaja phoenix down.ogg (ten jest na wskrzeszenie przez gracza).
+ if s:match('^rezygnujesz z oczekiwania na wskrzeszenie i odradzasz sie') or
+    s:match('^nikt nie zdazyl cie wskrzesic') or s:match('^twoja dusza wraca do swiatyni odrodzenia') then
+  player_downed=false;end_combat('odrodzenie w swiatyni')
+  state.hp=nil;state.mana=nil;state.player=nil;state.full=false
+  return
+ end
+ if s:match('^phoenix egg peka%. re%-raise przywraca cie do walki') then
+  player_downed=false;end_combat('phoenix egg')
+  state.hp=nil;state.mana=nil;state.player=nil;state.full=false
+  return
+ end
+ if s:match('^pokonujesz: ') or s:match('^druzyna pokonuje: ') then
+  stop_mob_music('pokonany mob')
+  focused_mob=nil;mob_sound_bucket=nil
+  sound('vanish');play('mob/died.ogg','sb_mob_death',0);state.mob=nil;mob_name=nil;look_mob=false;return
+ end
+ if s:match('^osiagniecie:%s*.+') or s:match('^osiagniecie odblokowane') or s:match('^zdobywasz osiagniecie') then sound('achievement',2);return end
+ -- Koniec oddawania questa: anuluj oczekujace dzwieki EXP/CAP/Over CAP.
+  -- Sama nagroda EXP nadal zostaje przyznana na serwerze.
+  if s:match('^zadanie ukonczone: ') or s:match('^quest ukonczony: ') then
+   cancel_pending_xp()
+   quest_reward_in_progress=false
+   quest_money_until=counters.lines+35
+   quest_money_played=false
+   prepare_quest_gold()
+   sound('quest',1)
+   return
+  end
+ -- Potwierdzone w quest_commands.py: te linie sa czescia oddawania questa
+  -- i poprzedzaja EXP postaci. Nie odtwarzaj zadnego dzwieku EXP w questach.
+  if s:match('^nagroda questa walki:') or s:match('^nagroda questa:%s*%d+%s+soul xp') then
+   quest_reward_in_progress=true
+   quest_reward_marker_line=counters.lines
+   cancel_pending_xp()
+   return
+  end
+  if quest_reward_in_progress and counters.lines-quest_reward_marker_line>80 then
+   quest_reward_in_progress=false
+  end
+  -- Pieniadze z questa dostajemy po komunikacie "Zadanie ukonczone".
+  -- Nie mylic z nagroda PRZEDMIOTOWA od NPC ani z przegladaniem listy.
+  if counters.lines<=quest_money_until and not quest_money_played and is_money_reward_line(s) and
+     (s:match('^.+ wrecza ci nagrode: ') or s:match('^o kurde%s*%-%s*premia za wykonanie:')) then
+   quest_money_played=true
+   quest_money_until=-100000
+   quest_gold_pending=true
+   if quest_gold_ready then play_quest_gold() end
+   return
+  end
+if s:match('^fame zaliczone') then sound('fame',1);return end
+ if s:match('^wazne odkrycie: %+%d+ ep') then sound('ep',1);return end
+ -- Zweryfikowany komunikat prawdziwego awansu Soul Level z player/character.py v107.
+ -- Nie odtwarzamy przy Soul XP, Soul Tier, Mastery, score ani poziomie postaci.
+ -- Odstep pozwala nie restartowac 6,6-sekundowego jingle przy serii awansow.
+ if s:match('^bron duszy osiaga soul level %d+%.$') then sound('soullevel',6,'sb_soul_level');return end
+ if s:match('^level postaci wzrasta do %d+') then sound('level',2);return end
+ -- Soulbound v113.00.24: potwierdzony AWANS umiejetnosci po jej uzywaniu.
+ -- Ten sam learned.ogg co przy poznawaniu nowego skilla; nie na Skill XP,
+ -- samo uzycie, podglad, maksymalny poziom czy wiadomosci [NEWS].
+ local skill_level_up=tonumber(s:match('^.+ awansuje na skill level (%d+)%.$'))
+ if in_world and skill_level_up and skill_level_up>=2 and not s:match('^%[') then
+  sound('learned',1)
+  return
+ end
+ if s:match('^.+:%s*bieglosc rosnie do %d+%.$') or (has(s,'bieglosc') and (has(s,'level') or has(s,'poziom')) and (has(s,'wzrasta do') or has(s,'awansuje na'))) then sound('joblevel',2);return end
+ if s:match('^uczysz sie umiejetnosci ') or s:match('^nauczono umiejetnosci ') or s:match('^nauczono%. .+ zaczyna na skill level 1%.$') then sound('learned',1);return end
+ if has(s,'za malo many') or has(s,'nie masz wystarczajaco many') then sound('outmp',1);return end
+ if has(s,'dolacza do druzyny') or has(s,'dolaczasz do druzyny') then sound('member',1);return end
+ if has(s,'opuszcza druzyne') or has(s,'opuszczasz druzyne') then sound('leaveparty',1);return end
+ if s:match('^heal beam: .+ odzyskuje %d+ hp') or s:match('^heal beam .+ lacznie %d+ hp') or s:match('^.+ uzywa heal beam%. odzyskujesz %d+ hp') then sound('healbeam',1);return end
+ if s:match('^jammer: .+ zostaje jednorazowo wylaczony') then jammer_active=true;sound('jammer',1);return end
+ -- Soulbound v113.00.17: serwer zamienia koncowe "Stop sie konczy."
+ -- w jedno wyrazne potwierdzenie, widoczne rowniez dla gracza solo
+ -- i pobliskich czlonkow druzyny. Nie wymagaj jammer_active:
+ -- czlonek druzyny moze nie widziec poczatkowego castu.
+ if in_world and s:match('^jammer na .+ zakonczyl dzialanie%.$') then
+  jammer_active=false
+  sound('jammeroff',1)
+  return
+ end
+ if s:match('^jammer: .+ przestaje') or s:match('^stop .+ wygasa') or has(s,'stop sie konczy.') then jammer_active=false;sound('jammeroff',1);return end
+ if has(s,'v-max') then
+  if has(s,'wygasa') or has(s,'dezaktywujesz') then sound('vmaxoff',1);return end
+  if s:match('^v%-max aktywny przez %d+ s') or has(s,'aktywujesz v-max') then sound('vmax',1);return end
+ end
+ if s:match('^wskrzeszasz .+%. wraca z 35 procent hp i many%.$') then sound('revive',1);return end
+ if s:match('^kupujesz:%s+') or s:match('^kupujesz wlasny statek') then sound('buy');return end
+ if s:match('^zakladasz:%s+') then sound('wear');return end
+ if s:match('^nagroda walutowa: ') or s:match('^otrzymujesz zloto:%s*%+%d+') or s:match('^otrzymujesz %d+ zlota') or s:match('^otrzymujesz %d+ srebra') or s:match('^otrzymujesz %d+ mithril') then sound('gold');return end
+ if s:match('^kondycja przeciwnika:') or s:match('^stan przeciwnika:') then if not sound_protocol then condition(s,'mob') end;return end
+ if s:match('^twoja kondycja:') or s:match('^stan twojego zdrowia:') then condition(s,'player');return end
+ if s:match('^.+ zadaje ci %d+ obrazen') or s:match('^.+ trafia cie .-%d+ obrazen') or s:match('^otrzymujesz %d+ obrazen') or (s:match(' atakuje%. typ obrazen:') and s:match('otrzymujesz %d+%.')) then sound('theyhit');return end
+ if s:match('^uderzenie duszy trafia') or s:match('^bron duszy .-:%s*.-trafi') or s:match('^bron duszy .-:%s*.-%d+ obrazen') then sound('soulhit');return end
+ -- Precyzyjna linia z kodu player/character.py; nie odtwarzamy co stat.
+ -- CAP dotyczy limitu pojedynczej nagrody, a nie EXP do levelu.
+ -- Odczyt capu nie jest nagroda i sam niczego nie odtwarza.
+ local current=s:match('^your experience cap is (%d+) exp') or
+               s:match('multi cap exp:%s*(%d+)')
+ if current then
+  current=tonumber(current)
+  cap=current
+  return
+ end
+ local xp=s:match('^exp postaci %+(%d+)%. postep %d+ z %d+%.') or
+          s:match('^exp postaci %+(%d+)%. osiagnieto maksymalny level')
+ if xp then
+  local n=tonumber(xp);last_xp=n
+  if sound_protocol then
+   -- Serwer wysyla marker po udanej wyplacie, zanim dotrze tekst EXP.
+   -- Po najblizszej nagrodzie EXP postaci znacznik zostaje zuzyty:
+   -- nastepny niezalezny kill nie jest wyciszany przez poprzedni CAP.
+   local same_reward=counters.lines-recent_sound_reward_at<=20
+   recent_sound_reward_at=-1000
+   if not same_reward then
+    if n<=10 then queue_xp_sound('crapexp') else queue_xp_sound('exp') end
+   end
+   return
+  end
+  if cap and n>=cap then
+   queue_xp_sound('cap')
+  elseif cap and n*2>=cap then
+   queue_xp_sound('halfcap')
+  elseif n<=10 then queue_xp_sound('crapexp') else queue_xp_sound('exp') end
+  return
+ end
+ -- Brak informacji o ile EXP zostalo ODLOZONE w banku w chwili jego uzyskania.
+ -- Nie uruchamiaj overcap od zwyklego widoku EXP Bank.
+ if not sound_protocol and (s:match('^przekroczono multi cap:') or s:match('^exp do banku:%s*%+%d+')) then
+  queue_xp_sound('overcap');return
+ end
+end
+-- Nie rejestrujemy aliasu dla '/': genericMud sam wysyla komende do serwera.
+-- Zmniejsza to ryzyko blokowania polecenia przez soundpack; nie gra dzwieku na Enter.
+
+mud.alias('sbs *',function(line,captures)
+ local arg=''
+ if type(captures)=='table' and captures[1] then arg=tostring(captures[1])
+ else arg=tostring(line or ''):match('^%S+%s+(.+)$') or '' end
+ arg=norm(arg)
+ if arg=='on' then active=true;say('ON')
+ elseif arg=='off' then active=false;end_combat('soundpack off');reset_quest_gold();cancel_pending_xp();temple_reset();bioblast_reset();over_cap_event_active=false;say('OFF')
+ elseif arg=='status' then say('v1.6.8 '..(active and 'ON' or 'OFF')..'; efekty '..math.floor(volume*100)..'%; muzyka '..(music_enabled and 'ON' or 'OFF')..' '..math.floor(music_mix*100)..'%; kroki_miasto '..(city_steps_enabled and 'ON' or 'OFF')..'; kroki_podziemia '..(cave_steps_enabled and 'ON' or 'OFF')..'; cap '..tostring(cap or 'nieznany')..'; odebrane linie '..counters.lines..'; dzwieki '..counters.played)
+ elseif arg=='diag' then say('DIAG v1.6.8: w_swiecie='..tostring(in_world)..'; linie='..counters.lines..'; rozpoznania='..counters.events..'; odtworzenia='..counters.played..'; bledy='..counters.errors..'; mud.play='..(mud and mud.play and 'dostepny' or 'BRAK')..' (typ '..type(mud.play)..')'..'; ostatnie zdarzenie='..last_event..'; ostatnia linia='..last_line..'; ostatni blad='..last_error..'; walki='..tostring(in_combat)..'; powalony='..tostring(player_downed)..'; stop muzyki='..stopped_music..'; zmiany utworu='..music_changes..'; muzyka='..(music_enabled and 'ON' or 'OFF')..' '..math.floor(music_mix*100)..'%; przyczyna='..last_stop_reason..'; slash=przekazywany bezposrednio; recall_odp='..recall_confirms..'; x2_start='..xp_event_starts..'; x2_koniec='..xp_event_endings..'; overcap_start='..over_cap_event_starts..'; prezenty='..advent_gifts_received..'; recall_innych='..temple_recall_count..'; x2_aktywny='..tostring(xp_event_active)..'; sound_event='..tostring(sound_protocol_count)..'; nowy_protokol='..tostring(sound_protocol)..'; ostatni_marker='..last_sound_marker)
+ elseif arg=='watch on' then debug_mode=true;say('Podglad linii WLACZONY; sbs watch off wylacza')
+ elseif arg=='watch off' then debug_mode=false;say('Podglad linii WYLACZONY')
+ elseif arg=='coverage' then say('Soulbound v107-v113: HALF_CAP/FULL_CAP/OVER_CAP_REWARD/OVER_CAP_START, starsze EXP_BANK obslugiwane. Pozostale zdarzenia na podstawie potwierdzonego tekstu. OGG nie dodaja nowych zdarzen po stronie serwera.')
+ elseif arg=='caves off' then cave_steps_enabled=false;city_walk_reset();say('Kroki podziemne OFF')
+ elseif arg=='caves on' then cave_steps_enabled=true;city_walk_reset();say('Kroki podziemne ON')
+ elseif arg=='caves status' then say('Kroki jaskinie/krypty '..(cave_steps_enabled and 'ON' or 'OFF')..'; odegrane '..cave_step_total..'; nastepny plik '..((cave_step_index%4)+1)..'.ogg')
+ elseif arg=='caves test' then
+  local n=(cave_step_index%4)+1
+  if play('steps/caves/'..n..'.ogg','sb_cave_preview',0,true) then say('Podglad podziemnego kroku '..n..'.ogg') end
+ elseif arg=='steps off' then city_steps_enabled=false;city_walk_reset();say('Kroki miejskie OFF')
+ elseif arg=='steps on' then city_steps_enabled=true;city_walk_reset();say('Kroki miejskie ON')
+ elseif arg=='steps status' then say('Kroki miejskie '..(city_steps_enabled and 'ON' or 'OFF')..'; odegrane '..city_step_total..'; nastepny plik '..((city_step_index%10)+1)..'.ogg; na podstawie v107')
+ elseif arg=='steps test' then
+  local n=(city_step_index%10)+1
+  if play('steps/'..n..'.ogg','sb_city_preview',0,true) then say('Podglad kroku '..n..'.ogg') end
+ elseif arg=='musicstop' then end_combat('reczne zatrzymanie');say('Zatrzymano muzyke kondycji mobow')
+ elseif arg=='music off' then music_enabled=false;stop_mob_music('muzyka OFF');mob_sound_bucket=nil;say('Muzyka walki OFF; efekty gry zostaja')
+ elseif arg=='music on' then
+  music_enabled=true
+  if state.mob and in_world and not player_downed and (in_combat or focused_mob) then start_mob_music(state.mob) end
+  say('Muzyka walki ON')
+ elseif arg=='music status' then say('Muzyka walki '..(music_enabled and 'ON' or 'OFF')..', glosnosc '..math.floor(music_mix*100)..'%; efekty '..math.floor(volume*100)..'%')
+ elseif arg:match('^musicvol %d+$') then
+  local n=tonumber(arg:match('%d+'))
+  if n<=100 then
+   music_mix=n/100
+   -- Zmiana glosnosci dotyczy tez aktualnego utworu (wznowienie od poczatku).
+   stop_mob_music('zmiana glosnosci muzyki')
+   mob_sound_bucket=nil
+   if n>0 and state.mob and in_world and music_enabled and not player_downed and (in_combat or focused_mob) then
+    start_mob_music(state.mob)
+   end
+   say('Glosnosc muzyki '..n..'%; efekty bez zmian')
+  end
+
+ elseif arg=='teststop' then
+  if mud and mud.stop then pcall(function() mud.stop('sb_preview_mob');mud.stop('sb_preview_player') end) end
+  say('Podglad nagran zatrzymany')
+ elseif arg:match('^testmob .+') or arg:match('^testplayer .+') then
+  local who,label=arg:match('^(testmob)%s+(.+)$')
+  if not who then who,label=arg:match('^(testplayer)%s+(.+)$') end
+  local valid=false
+  for _,name in ipairs(levels) do if name==label then valid=true end end
+  if who=='testmob' and label=='died' then valid=true end
+  if who=='testplayer' and label=='dying' then valid=false end
+  if valid then
+   local file=(who=='testmob' and 'mob/' or 'player/')..label..'.ogg'
+   local channel=who=='testmob' and 'sb_preview_mob' or 'sb_preview_player'
+   if play(file,channel,0,true) then say('Test '..label..'; sbs teststop zatrzymuje podglad') end
+  else say('Nieznany dzwiek kondycji: '..label) end
+ elseif arg=='probe' then on_line('Wazne odkrycie: +10 EP.');say('Symulacja lokalna EP: zdarzenia='..counters.events..', dzwieki='..counters.played..'. Nie jest to test serwera.')
+ elseif arg:match('^vol %d+$') then local n=tonumber(arg:match('%d+'));if n<=100 then volume=n/100;say('Glosnosc '..n..'%') end
+ elseif arg:match('^test [%w_]+$') then
+  local kind=arg:match('^test ([%w_]+)$')
+  if kind=='death' or kind=='mort' then sound('mort',0,'sb_death_a',true);sound('youdied',0,'sb_death_b',true)
+  elseif fx[kind] then sound(kind,0,'sb_test_'..kind,true)
+  else say('Brak przypisania do '..kind) end
+ elseif arg=='updater' then say('Aktualizacja: Generic MUD > Soundpacks > Manage installed soundpacks > Update from source. Wymaga pakietu z oficjalnego GitHub Release; po aktualizacji polacz ponownie.')
+ elseif arg=='help' then say('sbs on/off/status/updater/diag/coverage/steps on/off/status/test/caves on/off/status/test/music on/off/status/musicvol 0-100/musicstop/testmob POZIOM/testplayer POZIOM/teststop/probe/watch on/off/vol 0-100/test cap/halfcap/overcap/doublecaps/daygift/advent/biohit/poisoned/multiplierdown/otherrecall/jammeroff')
+ else say('Wpisz sbs help') end
+end)
+-- Osobny cichy kanal: znaczniki SOUND_EVENT sa techniczne i nie maja
+-- przeszkadzac NVDA. Dotyczy natywnego Generic MUD 0.24.0.
+if mud.set_channel then
+ pcall(function() mud.set_channel('sb_telemetry', {speak=false,display=false,interrupt=false}) end)
+end
+mud.trigger([[^SOUND_EVENT[ ]+]],function(line,captures) on_line(line) end,{regex=true,priority=100,channel='sb_telemetry'})
+-- Znaczniki SOUND_EVENT sa obslugiwane tylko przez pierwszy wyzwalacz.
+-- W przeciwnym razie player_login / tell_received mogly uruchomic efekt dwa razy.
+mud.trigger([[^(?!SOUND_EVENT[ ]+).+]],function(line,captures) on_line(line) end,{regex=true})
+say('Zaladowano v1.6.8 dla Soulbound v116.00.43 - Generic MUD, Twoje OGG.')
+)
  if newarea and newarea~='' then
   update_area(zone_hash(norm(newarea)))
   -- Opis wejscia do pokoju sam w sobie NIE jest zdarzeniem walki.
