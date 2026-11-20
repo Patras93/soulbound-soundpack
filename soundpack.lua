@@ -1,4 +1,4 @@
--- SOULBOUND SOUNDPACK v1.6.8 - Native Generic MUD (mud.play)
+-- SOULBOUND SOUNDPACK v1.6.9 - Native Generic MUD (mud.play)
 -- Komunikaty ruchu i strefy: zweryfikowane w Soulbound v107.00.0. SOUND_EVENT pozostaje kompatybilny.
 -- Regula bezpieczenstwa: brak dzwieku jest lepszy niz falszywy dzwiek.
 local active, volume = true, 0.7
@@ -53,6 +53,9 @@ local recall_confirms=0
 -- v12.00.8: zdarzenia przekazywane przez serwer (odzielne od tekstu do NVDA).
 local sound_protocol=false
 local reward_protocol_v11329=false -- markery EXP 113.00.29+
+local delayed_fame_protocol_v115=false
+local fame_last_cap_marker_line=-100000
+local fame_last_any_reward_marker_line=-100000
 local sound_protocol_count=0
 local mob_hp_by_id={}
 local focused_mob=nil
@@ -628,6 +631,10 @@ local function on_sound_event(s)
    -- Kazdy marker jest potwierdzona, niezalezna wyplata EXP.
    -- Bez sesyjnej blokady i bez opoznienia anulowanego przez quest.
    recent_sound_reward_at=counters.lines
+   -- Fame v115+: te markery przychodza przed tekstowym potwierdzeniem EXP.
+   -- Zapamietaj je, by nie odtwarzac drugiego CAP za te sama wyplate.
+   fame_last_any_reward_marker_line=counters.lines
+   if event=='full_cap' then fame_last_cap_marker_line=counters.lines end
    if event=='half_cap' then
     sound('halfcap',0,'sb_halfcap')
    elseif event=='full_cap' then
@@ -731,6 +738,9 @@ local function on_line(line)
   local major,minor,patch=s:match('soulbound v(%d+)%.(%d+)%.(%d+)')
    major,minor,patch=tonumber(major) or 0,tonumber(minor) or 0,tonumber(patch) or 0
    reward_protocol_v11329=(major>113 or (major==113 and (minor>0 or (minor==0 and patch>=29))))
+   delayed_fame_protocol_v115=major>=115
+   fame_last_cap_marker_line=-100000
+   fame_last_any_reward_marker_line=-100000
    mob_hp_by_id={};focused_mob=nil;mob_sound_bucket=nil
   temple_reset();bioblast_reset();over_cap_event_active=false
   city_walk_reset()
@@ -1045,7 +1055,29 @@ local function on_line(line)
    if quest_gold_ready then play_quest_gold() end
    return
   end
-if s:match('^fame zaliczone') then sound('fame',1);return end
+-- Nowa Fame v115+: EXP i Fama sa zatwierdzane oddzielnie, po czasie.
+ -- Nigdy nie graj na zabiciu Fame Moba, statusie, ani na "EXP oczekuje".
+ if in_world and delayed_fame_protocol_v115 and
+    s:match('^fame mob: zalegly exp za .+ zostal rozliczony%.$') then
+  -- W normalnej wyplacie serwer nadaje FULL_CAP/HALF_CAP/OVER_CAP_REWARD.
+  -- Bez znacznika zachowaj dzwiek CAP dla potwierdzonej nagrody Fame EXP.
+  -- Jezeli byl inny marker (HALF/OVER), NIE podmieniaj go na falszywy CAP.
+  local recent_marker=counters.lines-fame_last_any_reward_marker_line<=32
+  if not recent_marker then sound('cap',0,'sb_fame_exp_cap') end
+  fame_last_cap_marker_line=-100000
+  fame_last_any_reward_marker_line=-100000
+  return
+ end
+ -- Dzwiek Famy dopiero PO prawdziwym przyznaniu +1 (ok. 2 s po EXP).
+ if in_world and s:match('^fama:%s*%+1 za .+ %(.+%)%.$') then
+  sound('fame',0,'sb_fame')
+  return
+ end
+ -- Stary format Fame dopuszczaj tylko dla serwerow sprzed kolejki v115.
+ if in_world and not delayed_fame_protocol_v115 and s:match('^fame zaliczone') then
+  sound('fame',1)
+  return
+ end
  if s:match('^wazne odkrycie: %+%d+ ep') then sound('ep',1);return end
  -- Zweryfikowany komunikat prawdziwego awansu Soul Level z player/character.py v107.
  -- Nie odtwarzamy przy Soul XP, Soul Tier, Mastery, score ani poziomie postaci.
@@ -1137,8 +1169,8 @@ mud.alias('sbs *',function(line,captures)
  arg=norm(arg)
  if arg=='on' then active=true;say('ON')
  elseif arg=='off' then active=false;end_combat('soundpack off');reset_quest_gold();cancel_pending_xp();temple_reset();bioblast_reset();over_cap_event_active=false;say('OFF')
- elseif arg=='status' then say('v1.6.8 '..(active and 'ON' or 'OFF')..'; efekty '..math.floor(volume*100)..'%; muzyka '..(music_enabled and 'ON' or 'OFF')..' '..math.floor(music_mix*100)..'%; kroki_miasto '..(city_steps_enabled and 'ON' or 'OFF')..'; kroki_podziemia '..(cave_steps_enabled and 'ON' or 'OFF')..'; cap '..tostring(cap or 'nieznany')..'; odebrane linie '..counters.lines..'; dzwieki '..counters.played)
- elseif arg=='diag' then say('DIAG v1.6.8: w_swiecie='..tostring(in_world)..'; linie='..counters.lines..'; rozpoznania='..counters.events..'; odtworzenia='..counters.played..'; bledy='..counters.errors..'; mud.play='..(mud and mud.play and 'dostepny' or 'BRAK')..' (typ '..type(mud.play)..')'..'; ostatnie zdarzenie='..last_event..'; ostatnia linia='..last_line..'; ostatni blad='..last_error..'; walki='..tostring(in_combat)..'; powalony='..tostring(player_downed)..'; stop muzyki='..stopped_music..'; zmiany utworu='..music_changes..'; muzyka='..(music_enabled and 'ON' or 'OFF')..' '..math.floor(music_mix*100)..'%; przyczyna='..last_stop_reason..'; slash=przekazywany bezposrednio; recall_odp='..recall_confirms..'; x2_start='..xp_event_starts..'; x2_koniec='..xp_event_endings..'; overcap_start='..over_cap_event_starts..'; prezenty='..advent_gifts_received..'; recall_innych='..temple_recall_count..'; x2_aktywny='..tostring(xp_event_active)..'; sound_event='..tostring(sound_protocol_count)..'; nowy_protokol='..tostring(sound_protocol)..'; ostatni_marker='..last_sound_marker)
+ elseif arg=='status' then say('v1.6.9 '..(active and 'ON' or 'OFF')..'; efekty '..math.floor(volume*100)..'%; muzyka '..(music_enabled and 'ON' or 'OFF')..' '..math.floor(music_mix*100)..'%; kroki_miasto '..(city_steps_enabled and 'ON' or 'OFF')..'; kroki_podziemia '..(cave_steps_enabled and 'ON' or 'OFF')..'; cap '..tostring(cap or 'nieznany')..'; odebrane linie '..counters.lines..'; dzwieki '..counters.played)
+ elseif arg=='diag' then say('DIAG v1.6.9: w_swiecie='..tostring(in_world)..'; linie='..counters.lines..'; rozpoznania='..counters.events..'; odtworzenia='..counters.played..'; bledy='..counters.errors..'; mud.play='..(mud and mud.play and 'dostepny' or 'BRAK')..' (typ '..type(mud.play)..')'..'; ostatnie zdarzenie='..last_event..'; ostatnia linia='..last_line..'; ostatni blad='..last_error..'; walki='..tostring(in_combat)..'; powalony='..tostring(player_downed)..'; stop muzyki='..stopped_music..'; zmiany utworu='..music_changes..'; muzyka='..(music_enabled and 'ON' or 'OFF')..' '..math.floor(music_mix*100)..'%; przyczyna='..last_stop_reason..'; slash=przekazywany bezposrednio; recall_odp='..recall_confirms..'; x2_start='..xp_event_starts..'; x2_koniec='..xp_event_endings..'; overcap_start='..over_cap_event_starts..'; prezenty='..advent_gifts_received..'; recall_innych='..temple_recall_count..'; x2_aktywny='..tostring(xp_event_active)..'; sound_event='..tostring(sound_protocol_count)..'; nowy_protokol='..tostring(sound_protocol)..'; ostatni_marker='..last_sound_marker)
  elseif arg=='watch on' then debug_mode=true;say('Podglad linii WLACZONY; sbs watch off wylacza')
  elseif arg=='watch off' then debug_mode=false;say('Podglad linii WYLACZONY')
  elseif arg=='coverage' then say('Soulbound v107-v113: HALF_CAP/FULL_CAP/OVER_CAP_REWARD/OVER_CAP_START, starsze EXP_BANK obslugiwane. Pozostale zdarzenia na podstawie potwierdzonego tekstu. OGG nie dodaja nowych zdarzen po stronie serwera.')
@@ -1209,4 +1241,4 @@ mud.trigger([[^SOUND_EVENT[ ]+]],function(line,captures) on_line(line) end,{rege
 -- Znaczniki SOUND_EVENT sa obslugiwane tylko przez pierwszy wyzwalacz.
 -- W przeciwnym razie player_login / tell_received mogly uruchomic efekt dwa razy.
 mud.trigger([[^(?!SOUND_EVENT[ ]+).+]],function(line,captures) on_line(line) end,{regex=true})
-say('Zaladowano v1.6.8 dla Soulbound v116.00.43 - Generic MUD, Twoje OGG.')
+say('Zaladowano v1.6.9 dla Soulbound v116.00.43 - Generic MUD, Twoje OGG.')
