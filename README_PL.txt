@@ -1,38 +1,35 @@
-SOULBOUND SOUNDPACK v1.6.8 — INSTRUKCJA (PL)
+SOULBOUND SOUNDPACK v1.6.9 — INSTRUKCJA (PL)
 
 Repozytorium: https://github.com/Patras93/soulbound-soundpack
 Wydania: https://github.com/Patras93/soulbound-soundpack/releases
-Zgodność: Soulbound v116.00.43 i wcześniejsze komunikaty;
-Generic MUD v0.24.0+. Łącznie 87 OGG.
+Zgodność: Soulbound v116.00.43 i wcześniejsze, Generic MUD v0.24.0+.
+87 plików OGG zachowanych bez zmian.
 
-NAPRAWA ZMIANY STREFY
-- events/change area.ogg — wejście do INNEJ strefy świata.
-- Działa po prawdziwym dotarciu do granicy, także przy
-  prowadzeniu, gdy serwer nie robi automatycznego LOOK.
-- Rozpoznaje potwierdzenia "Docierasz do", "Dopływasz do"
-  oraz "WEJŚCIE" z katalogiem granic v116.00.43.
-- Nie gra przy każdym pokoju w rozległym terenie, samym
-  wydaniu polecenia ruchu ani przy oglądaniu mapy.
-- Po dotarciu nie gra ponownie podczas LOOK tej samej strefy.
-- Zachowano starsze wykrywanie stref przy opisie lokacji.
-- Zmiana terenu nie wymaga nowego pliku OGG.
+FAME MOBS — DWA OSOBNE DŹWIĘKI
+- ZABICIE: brak dźwięku Fame i CAP za odroczoną nagrodę.
+- PO WYPŁACIE EXP (po 60–300 s): CAP EXP — events/cap.ogg,
+  gdy serwer potwierdził rozliczenie pełnego Fame EXP.
+- PO PRZYZNANIU PUNKTU FAME (później): events/fame.ogg.
+- Powtórne zabicie tego samego Fame Moba wypłaca tylko EXP;
+  nie może ponownie odtworzyć dźwięku przyznania Famy.
+- Status/where fame/fame log nie uruchamiają dźwięków.
+- Przy poprawnych znacznikach FULL_CAP i HALF_CAP soundpack
+  zachowuje te rozróżnienia i nie dubluje CAP.
 
-AKTUALIZACJA W GENERIC MUD
-1. Otwórz Soundpacks > Manage installed soundpacks.
-2. Wybierz Soulbound Soundpack i Update from source.
-3. Po aktualizacji połącz się ponownie z grą.
-Sprawdzenie wersji: sbs status.
-Diagnostyka: sbs diag.
-Test pojedynczego nagrania: sbs test area.
+KOMENDY TESTOWE
+sbs test cap
+sbs test fame
+sbs status
+sbs diag
 
-POZOSTAŁE DŹWIĘKI
-Wszystkie dotychczasowe efekty zachowano, w tym:
-CAP, HALF CAP, Over CAP, Jammer, prezenty, awanse skilli
-i Duszy, Bio Blast, leczenie, muzykę walki i kroki.
+ZACHOWANO INNE DŹWIĘKI
+Zmiana terenu v116.43, Half CAP, Over CAP, Jammer, EXP,
+prezenty, nauka skilla, Soul Level, recall, muzyka walki, kroki.
 
-PUBLIKACJA
-GitHub Actions automatycznie sprawdza Lua i dźwięki, buduje
-pełny ZIP i publikuje Release po zmianie pack.toml.
-Bez uruchamiania jakichkolwiek skryptów CMD/BAT.
+AKTUALIZACJA
+Generic MUD > Soundpacks > Manage installed soundpacks >
+Update from source. Następnie połącz się ponownie.
+Publikacja na GitHubie jest automatyczna przez GitHub Actions.
+Bez CMD/BAT i bez ręcznego tworzenia Release.
 
-Nagrania udostępniaj tylko przy posiadaniu praw do ich rozpowszechniania.
+Nagrania udostępniaj tylko z odpowiednimi prawami.
