@@ -1,47 +1,42 @@
-SOULBOUND SOUNDPACK v1.6.8 — ZMIANY (PL)
+SOULBOUND SOUNDPACK v1.6.9 — ZMIANY (PL)
 
-NAPRAWA ZMIANY TERENU W SOULBOUND MUD v116.00.43
+NAPRAWA FAME MOBS W SOULBOUND v116.00.43
 
-Problem
-- W nowych rozległych terenach, przy chodzeniu i automatycznym prowadzeniu,
-  gra często wysyła "Docierasz do: NAZWA." bez "Strefa: ...".
-- Stary soundpack używał głównie linii LOOK ze strefą, dlatego
-  events/change area.ogg nie grał na części prawdziwych granic.
+1. Dźwięk Fame: events/fame.ogg
+- Rozpoznaje faktyczne, trwałe przyznanie punktu po opóźnieniu:
+  "FAMA: +1 za NAZWA BOSSA (REGION)."
+- Nie odtwarza się od razu po zabiciu Fame Moba, przy zgłoszeniu
+  nagrody oczekującej na rozliczenie, przy fame/status, ani przy
+  ponownym zabiciu, które wypłaca tylko EXP.
+- Stary format "Fame zaliczone" nie wywołuje już fałszywego
+  dźwięku przy nowej, opóźnionej mechanice v115–v116.
+- Zachowano starszą obsługę dla serwerów bez opóźnionej kolejki.
 
-Naprawa
-- Rozpoznawanie rzeczywistego dotarcia do granicy z komunikatów:
-  "Docierasz do:", "Dopływasz do:" i "WEJŚCIE:".
-- Strefa docelowa jest ustalana na podstawie zweryfikowanych
-  fizycznych przejść z katalogu Soulbound v116.00.43, a nie
-  odgadywana z samego brzmienia nazwy lokacji.
-- Zweryfikowano 20 081 lokacji, 141 stref, 295 przejść
-  między strefami (291 różnych par strefa / nazwa celu).
-  Sprawdzono wszystkie 71 970 fizycznych wyjść, bez pomylenia
-  zwykłego ruchu w strefie z przejściem granicznym.
-- Dźwięk "change area.ogg" odtwarza się raz po zmianie terenu,
-  nie przy każdym kroku i nie przy komendzie "Idziesz".
-- Późniejszy LOOK potwierdza nową strefę bez drugiego dźwięku.
-- Zachowane wykrywanie zmiany strefy z prawidłowego opisu
-  aktualnej lokacji, np. po teleportacji.
-- Brak dźwięku przed wejściem do gry, po wylogowaniu i przy
-  odczycie opisów cudzych map.
+2. CAP EXP za Fame: events/cap.ogg
+- Gdy rzeczywiście wypłacono opóźniony EXP, rozpoznawany jest
+  "FAME MOB: zaległy EXP za NAZWA BOSSA został rozliczony."
+- Gdy serwer nadał poprawny SOUND_EVENT FULL_CAP, działa dotychczasowy
+  CAP i nie jest uruchamiany ponownie przez potwierdzenie tekstowe.
+- Gdy brak markerów EXP, potwierdzenie rozliczenia nagrody Fame
+  ma osobny awaryjny wyzwalacz CAP, aby dźwięk nie znikał.
+- Jeśli wypłata miała tylko HALF_CAP/OVER_CAP_REWARD, awaryjny
+  wyzwalacz nie podmienia prawidłowego efektu na CAP.
+- Nie odtwarza CAP przy zabiciu bossa, zapowiedzi opóźnienia
+  ani nieudanym/niepotwierdzonym rozliczeniu.
 
-ZGODNOŚĆ
-- Zachowane wszystkie 87 OGG i pozostałe efekty Soulbound:
-  Jammer, CAP/Over CAP, EXP, prezenty, awans Skill Level,
-  Soul Level, Bio Blast, recall, kroki i muzyka walki.
-- Kod gry i baza produkcyjna niezmienione.
-- Nowe fizyczne granice dodane po v116.00.43 mogą wymagać
-  odświeżenia mapy soundpacka lub serwerowego znacznika strefy.
+3. Zasady gameplaya BEZ ZMIAN
+- W Soulbound v116: EXP po opóźnieniu 60–300 sekund, następnie
+  co najmniej około 2 sekundy później Fame.
+- Pierwszy Fame +1, powtórne zabicia dają EXP bez ponownej Famy.
+- Nie zmieniono kodu ani bazy gry; soundpack nie przyznaje EXP/Fame.
 
-TESTY I PUBLIKACJA
-- Dodano test_v168.lua: wejście i wyjście z nowych stref, ruch
-  bez LOOK, prowadzenie, morze, podziemia i brak podwójnego odtwarzania.
-- Zachowano wcześniejsze zestawy testów Lua, Lupa i kontrolę OGG.
-- Automatyczne wydanie przez GitHub Actions po zmianie pack.toml.
-  Bez CMD/BAT i ręcznego publikowania.
+4. Regresja i publikacja
+- Nowy test_v169.lua testuje kill, opóźnione EXP, CAP z markerem
+  i bez, unikanie duplikatów, późniejszą Famę, ponowne zabicia,
+  rozłączenie i brak fałszywych zdarzeń.
+- Wszystkie wcześniejsze dźwięki (87 OGG) pozostają bez zmian,
+  w tym zmiany terenów v116.43 i CAP/Over CAP.
+- GitHub Actions uruchamia Lua/Lupa, sprawdza OGG i publikuje
+  kompletny ZIP automatycznie, bez CMD/BAT.
 
-UWAGA
-- Regresja odtwarza autentyczne komunikaty z kodu v116.00.43.
-  Odsłuch przy realnym przechodzeniu granic w Generic MUD
-  pozostaje do potwierdzenia.
+Odsłuch na działającym serwerze Generic MUD wymaga potwierdzenia.
