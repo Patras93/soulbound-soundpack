@@ -1,42 +1,40 @@
-SOULBOUND SOUNDPACK v1.6.9 — ZMIANY (PL)
+SOULBOUND SOUNDPACK v1.6.10 — ZMIANY (PL)
 
-NAPRAWA FAME MOBS W SOULBOUND v116.00.43
+NAPRAWA DZWIEKU EVENT OVER CAP — SOULBOUND v116.00.68
 
-1. Dźwięk Fame: events/fame.ogg
-- Rozpoznaje faktyczne, trwałe przyznanie punktu po opóźnieniu:
-  "FAMA: +1 za NAZWA BOSSA (REGION)."
-- Nie odtwarza się od razu po zabiciu Fame Moba, przy zgłoszeniu
-  nagrody oczekującej na rozliczenie, przy fame/status, ani przy
-  ponownym zabiciu, które wypłaca tylko EXP.
-- Stary format "Fame zaliczone" nie wywołuje już fałszywego
-  dźwięku przy nowej, opóźnionej mechanice v115–v116.
-- Zachowano starszą obsługę dla serwerów bez opóźnionej kolejki.
+- Przy ogloszeniu "EVENT OVER CAP START. Przez 15 minut limit nagrody
+  EXP x2; sam EXP nie jest podwajany." odtwarza sie istniejacy
+  sounds/events/double caps.ogg.
+- Od Soulbound v116.00.64 serwer nie wysyla juz technicznego znacznika
+  SOUND_EVENT OVER_CAP_START. Wciaz wysyla oryginalny tekstowy
+  komunikat startu co godzine o XX:30 i konca o XX:45.
+- Soundpack v1.6.9 pomijal tekst w nowych wersjach, zakladajac, ze
+  techniczny marker nadejdzie. Poprawiono te zaleznosc.
+- Dzwiek gra raz przy rzeczywistym ogloszeniu startu, nie przy
+  statusie aktywnego eventu, odczycie czasu ani samym logowaniu.
+- Po komunikacie zakonczenia nastepny start moze zagrac ponownie.
+- Zachowano starsze SOUND_EVENT OVER_CAP_START. Jesli tekst
+  i marker zostana wyslane razem, nie powinny podwoic dzwieku.
+- Godzinne wydarzenie i nagroda OVER_CAP_REWARD to osobne efekty:
+  start = double caps.ogg; przekroczenie limitu = overcap.ogg.
+- W v116.64+ nowy EXP nie podlega limitom CAP, dlatego serwer nie
+  generuje juz znacznikow nagrody OVER_CAP_REWARD, FULL_CAP, HALF_CAP.
+  Soundpack nie symuluje nieistniejacych wyplat ani bonusu EXP.
+- Mechanika gry, zegar eventow i baza postaci nie byly zmieniane.
 
-2. CAP EXP za Fame: events/cap.ogg
-- Gdy rzeczywiście wypłacono opóźniony EXP, rozpoznawany jest
-  "FAME MOB: zaległy EXP za NAZWA BOSSA został rozliczony."
-- Gdy serwer nadał poprawny SOUND_EVENT FULL_CAP, działa dotychczasowy
-  CAP i nie jest uruchamiany ponownie przez potwierdzenie tekstowe.
-- Gdy brak markerów EXP, potwierdzenie rozliczenia nagrody Fame
-  ma osobny awaryjny wyzwalacz CAP, aby dźwięk nie znikał.
-- Jeśli wypłata miała tylko HALF_CAP/OVER_CAP_REWARD, awaryjny
-  wyzwalacz nie podmienia prawidłowego efektu na CAP.
-- Nie odtwarza CAP przy zabiciu bossa, zapowiedzi opóźnienia
-  ani nieudanym/niepotwierdzonym rozliczeniu.
+REGRESJA
+- Dodano .github/tests/test_v1610.lua: tekstowy start bez markera
+  v116.68, powtarzane ogloszenia, reset po koncu, starszy marker,
+  deduplikacja tekst/marker, brak dzwieku poza gra.
+- Wszystkie dotychczasowe testy dzwiekow zachowane.
+- Wszystkie 87 nagran OGG bez zmian, w tym CAP, Fama, Jammer,
+  prezenty, przejscia terenow i awanse umiejetnosci.
 
-3. Zasady gameplaya BEZ ZMIAN
-- W Soulbound v116: EXP po opóźnieniu 60–300 sekund, następnie
-  co najmniej około 2 sekundy później Fame.
-- Pierwszy Fame +1, powtórne zabicia dają EXP bez ponownej Famy.
-- Nie zmieniono kodu ani bazy gry; soundpack nie przyznaje EXP/Fame.
+WYDAWANIE
+- GitHub Actions wykonuje testy Lua i Lupa, sprawdza OGG,
+  buduje pelny ZIP i publikuje Release automatycznie.
+- Bez plikow CMD/BAT i recznego tworzenia wydania.
 
-4. Regresja i publikacja
-- Nowy test_v169.lua testuje kill, opóźnione EXP, CAP z markerem
-  i bez, unikanie duplikatów, późniejszą Famę, ponowne zabicia,
-  rozłączenie i brak fałszywych zdarzeń.
-- Wszystkie wcześniejsze dźwięki (87 OGG) pozostają bez zmian,
-  w tym zmiany terenów v116.43 i CAP/Over CAP.
-- GitHub Actions uruchamia Lua/Lupa, sprawdza OGG i publikuje
-  kompletny ZIP automatycznie, bez CMD/BAT.
-
-Odsłuch na działającym serwerze Generic MUD wymaga potwierdzenia.
+UWAGA
+- Testy symuluja prawdziwe formaty komunikatow serwera v116.68;
+  odsluch w zywej grze pozostaje do potwierdzenia.
