@@ -1,15 +1,13 @@
-# Soulbound Soundpack v1.6.9
+# Soulbound Soundpack v1.6.10
 
-Natywny soundpack Lua dla Generic MUD v0.24.0+ oraz Soulbound v116.00.43. **87 OGG** bez zmian.
+Natywny soundpack Lua dla Generic MUD v0.24.0+ i Soulbound v116.00.68 (zgodnosc wsteczna). Zachowano **87 OGG**.
 
-**Fame Mob — delayed reward fixes:** Potwierdzenie rozliczenia opóźnionego EXP z Fame Moba uruchamia CAP, jeśli brakuje autorytatywnego znacznika nagrody. Gdy FULL_CAP został już rozpoznany, potwierdzenie nie dubluje efektu. Przyznanie \`FAMA: +1 za ... (region).\` uruchamia \`fame.ogg\` dopiero po właściwej wypłacie Famy, nie przy zabiciu bossa, zapowiedzi EXP ani sprawdzaniu statusu.
+**Over Cap event fix:** Soulbound v116.64+ nie nadaje juz markera \`SOUND_EVENT OVER_CAP_START\`, poniewaz usunieto limity EXP, ale nadal rozglasza \`EVENT OVER CAP START\` o XX:30. Soundpack odtwarza \`sounds/events/double caps.ogg\` na ten rzeczywisty komunikat, raz na start, z ochrona przed duplikacja starszego znacznika. \`overcap.ogg\` pozostaje osobnym dzwiekiem ponadlimitowej nagrody, ktora nie wystepuje w obecnym nielimitowanym EXP.
 
-Pozostałe efekty, w tym zmiany granic v116.43, CAP/Half/Over CAP, Jammer, prezenty, Soul Level i muzyka walki, pozostają bez zmian.
+**Aktualizacja:** Generic MUD > Soundpacks > Manage installed soundpacks > Update from source, potem ponowne polaczenie.
 
-**Aktualizacja:** Generic MUD > Soundpacks > Manage installed soundpacks > Update from source, potem ponowne połączenie.
-
-**Publikacja:** GitHub Actions automatycznie testuje i publikuje ZIP po zmianie pack.toml. Bez CMD/BAT.
+**Publikacja:** GitHub Actions testuje i publikuje ZIP automatycznie po aktualizacji \`pack.toml\`, bez CMD/BAT.
 
 [Releases](https://github.com/Patras93/soulbound-soundpack/releases/latest) | README_PL.txt | CHANGELOG_PL.txt
 
-Nagrania rozpowszechniaj tylko z odpowiednimi uprawnieniami.
+Nagrania wolno rozpowszechniac zgodnie z posiadanymi prawami.
